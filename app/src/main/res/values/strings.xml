@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">ZippoReppoGitHub</string>
+    <string name="app_name" translatable="false">ZippoReppoGitHub</string>
+    <string name="Search">Поиск</string>
+    <string name="History">История загрузок</string>
 </resources>

@@ -2,4 +2,12 @@
     <string name="app_name" translatable="false">ZippoReppoGitHub</string>
     <string name="Search">Поиск</string>
     <string name="History">История загрузок</string>
+
+    <string name="unknown_error_text">Unknown error! Contact with developers.</string>
+    <string name="network_error_text">Network error! Check your internet connection.</string>
+    <string name="not_found_error_text">Data not found! Contact with developers.</string>
+    <string name="access_denied_error_text">Access error! Contact with developers.</string>
+    <string name="service_unavailable_error_text">Server error! Try again later.</string>
+    <string name="no_permission_error_text">App need permission to work with storage</string>
+    <string name="common_db_error_text">Data Base error, please, contact with developer</string>
 </resources>

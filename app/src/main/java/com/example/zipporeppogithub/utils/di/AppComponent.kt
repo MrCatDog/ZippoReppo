@@ -9,7 +9,7 @@ import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
-@Component
+@Component(modules = [RemoteModule::class])
 interface AppComponent {
 
     @Component.Builder

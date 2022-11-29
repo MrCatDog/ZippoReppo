@@ -3,7 +3,8 @@ package com.example.zipporeppogithub.model
 import com.example.zipporeppogithub.model.errorhandlers.ErrorHandler
 import com.example.zipporeppogithub.model.errorhandlers.NetworkErrorHandler
 import com.example.zipporeppogithub.model.network.GithubApi
-import com.example.zipporeppogithub.model.network.GithubUser
+import com.example.zipporeppogithub.model.network.GithubRepo
+import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.utils.ResultWrapper
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -14,8 +15,12 @@ class Repository @Inject constructor(
     private val githubApi: GithubApi,
     private val networkErrorHandler: NetworkErrorHandler
 ) {
-    suspend fun loadUsersFromNetwork(query: String) : ResultWrapper<List<GithubUser>> {
+    suspend fun loadUsersFromNetwork(query: String) : ResultWrapper<GithubUserSearchResult> {
         return safeCall(Dispatchers.IO, networkErrorHandler) { githubApi.getUserList(query) } //todo transfer to domain model
+    }
+
+    suspend fun loadUserRepos(username: String) : ResultWrapper<List<GithubRepo>> {
+        return safeCall(Dispatchers.IO, networkErrorHandler) { githubApi.getUserRepos(username) }
     }
 
     private suspend fun <T> safeCall(

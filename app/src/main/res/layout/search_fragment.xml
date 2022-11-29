@@ -12,7 +12,9 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/users_list"
-        />
+        android:hint="@string/search_hint"
+        android:autofillHints="username"
+        android:inputType="text" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/users_list"

@@ -10,7 +10,7 @@ interface GithubApi {
     @GET("/search/users")
     suspend fun getUserList(
         @Query("q") loginQuery: String
-    ): List<GithubUser>
+    ): GithubUserSearchResult
 
     @GET("/users/{userLogin}/repos")
     suspend fun getUserRepos(

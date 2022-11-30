@@ -1,4 +1,4 @@
-package com.example.zipporeppogithub.view
+package com.example.zipporeppogithub.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

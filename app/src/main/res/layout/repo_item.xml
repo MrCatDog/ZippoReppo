@@ -7,35 +7,41 @@
 
     <TextView
         android:id="@+id/repo_title"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="@dimen/repo_item_text_size"
         app:layout_constraintBottom_toTopOf="@id/repo_open_in_browser"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/download_barrier"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/repo_open_in_browser"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/repo_open_in_browser_btn_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/download_barrier"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/repo_title" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/download_barrier"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:barrierDirection="right"
-        app:constraint_referenced_ids="repo_title,repo_open_in_browser"
+        app:barrierDirection="left"
+        app:constraint_referenced_ids="repo_download"
         tools:layout_editor_absoluteX="227dp"
         tools:layout_editor_absoluteY="97dp" />
 
-    <Button
+    <ImageButton
         android:id="@+id/repo_download"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="@string/repo_download_content_desc"
+        android:src="@drawable/repo_download_img"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/download_barrier"
         app:layout_constraintRight_toRightOf="parent"

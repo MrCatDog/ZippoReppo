@@ -1,4 +1,4 @@
-package com.example.zipporeppogithub.viewmodels
+package com.example.zipporeppogithub.ui.search
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,7 +15,6 @@ import com.example.zipporeppogithub.utils.MutableLiveEvent
 import com.example.zipporeppogithub.utils.ResultWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,26 +31,30 @@ class SearchViewModel
     val users: LiveData<List<GithubUserSearchResult.User>>
         get() = _users
 
-    private val _error = MutableLiveEvent<Int>()
-    val error: LiveData<Int>
+    private val _error = MutableLiveData<Int?>()
+    val error: LiveData<Int?>
         get() = _error
 
-    private val _isEmpty = MutableLiveData<Boolean>(false)
-    val isEmpty: LiveData<Boolean>
-        get() = _isEmpty
+    private val _isAnswerEmpty = MutableLiveData(false)
+    val isAnswerEmpty: LiveData<Boolean>
+        get() = _isAnswerEmpty
 
     private val _navigateToUserRepos = MutableLiveEvent<String>()
     val navigateToUserRepos: LiveData<String>
         get() = _navigateToUserRepos
 
-    private var request:Job? = null
+    private var request: Job? = null
 
-    private suspend fun searchUsers(query : String) {
-        _isEmpty.postValue(false)
+    private suspend fun searchUsers(query: String) {
+        _users.postValue(emptyList())
+        _error.postValue(null)
+        _isAnswerEmpty.postValue(false)
+        _isLoading.postValue(true)
+
         when (val answer = repository.loadUsersFromNetwork(query)) {
             is ResultWrapper.Success -> {
-                if(answer.value.resultsCount <= 0) {
-                    _isEmpty.postValue(true)
+                if (answer.value.resultsCount <= 0) {
+                    _isAnswerEmpty.postValue(true)
                 } else {
                     _users.postValue(answer.value.usersList)
                 }
@@ -60,6 +63,7 @@ class SearchViewModel
                 _error.postValue(handleError(answer.error))
             }
         }
+        _isLoading.postValue(false)
     }
 
     private fun handleError(error: ErrorEntity): Int {
@@ -82,17 +86,21 @@ class SearchViewModel
         _navigateToUserRepos.postValue(item.username)
     }
 
+    fun retryBtnClicked(query: String) {
+        viewModelScope.launch(Dispatchers.IO) { searchUsers(query) }
+    }
+
     fun onSearchTextChanged(query: String) {
-        _users.value = emptyList()
-        if(query.isNotEmpty()) {
-            if(request?.isActive == true) {
+        if (query.isNotEmpty()) {
+            if (request?.isActive == true) {
                 request!!.cancel() //todo
             }
-            request = viewModelScope.launch(Dispatchers.IO) {
-                _isLoading.postValue(true)
-                searchUsers(query)
-                _isLoading.postValue(false)
-            }
+            request = viewModelScope.launch(Dispatchers.IO) { searchUsers(query) }
+        } else {
+            _users.postValue(emptyList())
+            _error.postValue(null)
+            _isAnswerEmpty.postValue(false)
+            _isLoading.postValue(true)
         }
 
     }

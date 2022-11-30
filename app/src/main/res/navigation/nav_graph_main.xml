@@ -6,11 +6,11 @@
 
     <fragment
         android:id="@+id/history"
-        android:name="com.example.zipporeppogithub.view.HistoryFragment"
+        android:name="com.example.zipporeppogithub.ui.history.HistoryFragment"
         android:label="history" />
     <fragment
         android:id="@+id/search"
-        android:name="com.example.zipporeppogithub.view.SearchFragment"
+        android:name="com.example.zipporeppogithub.ui.search.SearchFragment"
         android:label="search" >
         <action
             android:id="@+id/action_Search_to_reposFragment"
@@ -18,7 +18,7 @@
     </fragment>
     <fragment
         android:id="@+id/reposFragment"
-        android:name="com.example.zipporeppogithub.view.ReposFragment"
+        android:name="com.example.zipporeppogithub.ui.repos.ReposFragment"
         android:label="ReposFragment" >
         <argument android:name="userLogin"
             app:argType="string" />

@@ -1,5 +1,6 @@
 package com.example.zipporeppogithub.model.network
 
+import okhttp3.ResponseBody
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -22,5 +23,5 @@ interface GithubApi {
     suspend fun getRepoZip(
         @Path("owner") userLogin: String,
         @Path("repo") repoName: String
-    )
+    ) : ResponseBody
 }

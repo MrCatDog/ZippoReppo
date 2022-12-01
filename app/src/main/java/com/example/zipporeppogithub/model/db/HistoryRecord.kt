@@ -3,7 +3,6 @@ package com.example.zipporeppogithub.model.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.zipporeppogithub.utils.DATE_FORMAT
-import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.*
 

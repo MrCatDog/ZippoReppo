@@ -1,7 +1,7 @@
 package com.example.zipporeppogithub.model.db
 
 import androidx.room.TypeConverter
-import java.sql.Date
+import java.util.Date
 
 class Converters {
 

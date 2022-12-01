@@ -9,7 +9,7 @@ interface HistoryDao {
     @Insert
     fun insert(users: HistoryRecord)
 
-    @Query("SELECT * FROM history")
+    @Query("SELECT * FROM history ORDER BY id DESC") //или ORDER BY dateAndTime DESC ?
     fun getAllRecords(): List<HistoryRecord>
 
 }

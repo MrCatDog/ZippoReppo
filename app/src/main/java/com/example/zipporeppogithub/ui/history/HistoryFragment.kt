@@ -57,14 +57,18 @@ class HistoryFragment : Fragment() {
         }
 
         viewModel.isError.observe(viewLifecycleOwner) {
-            if(it) {
+            if (it) {
                 binding.retryBtn.visibility = View.VISIBLE
             } else {
                 binding.retryBtn.visibility = View.GONE
             }
         }
 
-        binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked() }
+        binding.retryBtn.setOnClickListener { viewModel.getHistory() }
+
+        viewModel.getHistory()
+        //наверное это самый простой способ обновлять состояние,
+        // когда пользователь сюда заглядывает
 
         return binding.root
     }

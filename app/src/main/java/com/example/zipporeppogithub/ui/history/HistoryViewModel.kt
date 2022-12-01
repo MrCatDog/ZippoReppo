@@ -35,10 +35,6 @@ class HistoryViewModel
     val isError: LiveData<Boolean>
         get() = _isError
 
-    init {
-        viewModelScope.launch(Dispatchers.IO) { requestHistory() }
-    }
-
     private suspend fun requestHistory() {
         _isError.postValue(false)
         _message.postValue(null)
@@ -74,9 +70,7 @@ class HistoryViewModel
         }
     }
 
-    fun retryBtnClicked() {
+    fun getHistory() {
         viewModelScope.launch(Dispatchers.IO) { requestHistory() }
     }
-
-
 }

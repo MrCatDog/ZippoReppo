@@ -1,11 +1,13 @@
 package com.example.zipporeppogithub.ui.repos
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.Repository
+import com.example.zipporeppogithub.model.db.HistoryRecord
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.utils.ErrorEntity
 import com.example.zipporeppogithub.utils.MutableLiveEvent
@@ -18,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
+import java.util.*
 
 class ReposViewModel
 @AssistedInject constructor(
@@ -66,33 +69,6 @@ class ReposViewModel
         viewModelScope.launch(Dispatchers.IO) { searchNew(userLogin) }
     }
 
-//    private suspend fun requestRepos(username: String) {
-//        _isError.postValue(false)
-//        _message.postValue(null)
-//        _repos.postValue(emptyList())
-//        _isLoading.postValue(true)
-//
-//        when (val answer = repository.loadUserRepos(username )) {
-//            is ResultWrapper.Success -> {
-//                val repos = answer.value
-//                _repos.postValue(
-//                    repos.ifEmpty {
-//                        _message.postValue(R.string.empty_repos_text)
-//                        emptyList()
-//                    }
-//                )
-//            }
-//            is ResultWrapper.Failure -> {
-//                val errMsg = handleError(answer.error)
-//                if (errMsg != null) {
-//                    _message.postValue(errMsg)
-//                    _isError.postValue(true)
-//                }
-//            }
-//        }
-//        _isLoading.postValue(false)
-//    }
-
     private suspend fun searchRepos(query: String): ResultWrapper<List<GithubRepo>> =
         repository.loadUserRepos(query, REPOS_RESULT_COUNT, resultsPage)
 
@@ -129,10 +105,18 @@ class ReposViewModel
         _htmlUrl.postValue(item.url)
     }
 
-    private suspend fun loadZipRepo(repoName: String) {
-        _isError.postValue(false)
-        _message.postValue(null)
+    private suspend fun saveDownloadHistoryRecord(repoName: String) {
+        repository.saveDownloadInHistory(
+            HistoryRecord(
+                userLogin, repoName,
+                Calendar.getInstance().time
+            )
+        )
+    }
 
+    //Suppress на _snackMessage.postValue(errMsg) - баг линта.
+    @SuppressLint("NullSafeMutableLiveData")
+    private suspend fun loadZipRepo(repoName: String) {
         when (val answer = repository.loadRepoZip(userLogin, repoName)) {
             is ResultWrapper.Success -> {
                 saveFile(answer.value, repoName, downloadPath)
@@ -140,14 +124,13 @@ class ReposViewModel
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _message.postValue(errMsg)
-                    _isError.postValue(true)
+                    _snackMessage.postValue(errMsg)
                 }
             }
         }
     }
 
-    private fun saveFile(body: ResponseBody, repoName: String, path: String) {
+    private suspend fun saveFile(body: ResponseBody, repoName: String, path: String) {
 //        val workManager = WorkManager.getInstance(Context)
 //        workManager.enqueue(OneTimeWorkRequest.Builder(FooWorker::class).build())
 //todo
@@ -169,6 +152,7 @@ class ReposViewModel
 //        } finally {
 //            input?.close()
 //        }
+        saveDownloadHistoryRecord(repoName)
     }
 
     private fun handleError(error: ErrorEntity): Int? {
@@ -194,6 +178,9 @@ class ReposViewModel
         }
     }
 
+    //Suppress на _additionalRepos.postValue(answer.value)
+    //и _snackMessage.postValue(errMsg) - баг линта.
+    @SuppressLint("NullSafeMutableLiveData")
     fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int) {
         if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
             if (request?.isActive == true || allDownloaded) {
@@ -213,7 +200,7 @@ class ReposViewModel
                     is ResultWrapper.Failure -> {
                         val errMsg = handleError(answer.error)
                         if (errMsg != null) {
-                            _snackMessage.postValue(errMsg) //когда они это исправят?
+                            _snackMessage.postValue(errMsg)
                         }
                     }
                 }

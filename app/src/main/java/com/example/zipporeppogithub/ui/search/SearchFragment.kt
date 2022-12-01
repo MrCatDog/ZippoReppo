@@ -6,10 +6,13 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.SearchFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
@@ -34,9 +37,20 @@ class SearchFragment : Fragment() {
         val recyclerAdapter = SearchRecyclerAdapter(viewModel::listItemClicked)
         val linearLayoutManager = LinearLayoutManager(context)
 
+        val dividerItemDecoration =
+            DividerItemDecoration(binding.usersList.context, linearLayoutManager.orientation)
+        dividerItemDecoration.setDrawable(
+            ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.divider_search_item_layout,
+                null
+            )!!
+        )
+
         binding.usersList.apply {
             layoutManager = linearLayoutManager
             adapter = recyclerAdapter
+            addItemDecoration(dividerItemDecoration)
         }
 
         viewModel.users.observe(viewLifecycleOwner) {
@@ -94,14 +108,12 @@ class SearchFragment : Fragment() {
             override fun beforeTextChanged(
                 s: CharSequence, start: Int,
                 count: Int, after: Int
-            ) {
-            }
+            ) {}
 
             override fun onTextChanged(
                 s: CharSequence, start: Int,
                 before: Int, count: Int
-            ) {
-            }
+            ) {}
         })
 
         binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked(binding.searchBar.text.toString()) }

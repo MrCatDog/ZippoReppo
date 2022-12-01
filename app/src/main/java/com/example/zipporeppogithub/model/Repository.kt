@@ -9,10 +9,12 @@ import com.example.zipporeppogithub.model.network.GithubApi
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.utils.ResultWrapper
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import retrofit2.http.Query
 import javax.inject.Inject
 
 class Repository @Inject constructor(
@@ -21,15 +23,29 @@ class Repository @Inject constructor(
     private val networkErrorHandler: NetworkErrorHandler,
     private val dbErrorHandler: DBErrorHandler
 ) {
-    suspend fun loadUsersFromNetwork(query: String): ResultWrapper<GithubUserSearchResult> {
+    suspend fun loadUsersFromNetwork(
+        query: String,
+        resultsPerPage: Int,
+        pageNumber: Int
+    ): ResultWrapper<GithubUserSearchResult> {
         return safeCall(
             Dispatchers.IO,
             networkErrorHandler
-        ) { githubApi.getUserList(query) } //todo transfer to domain model
+        ) { githubApi.getUserList(query, resultsPerPage, pageNumber) }
     }
 
-    suspend fun loadUserRepos(username: String): ResultWrapper<List<GithubRepo>> {
-        return safeCall(Dispatchers.IO, networkErrorHandler) { githubApi.getUserRepos(username) }
+    suspend fun loadUserRepos(
+        username: String,
+        resultsPerPage: Int,
+        pageNumber: Int
+    ): ResultWrapper<List<GithubRepo>> {
+        return safeCall(Dispatchers.IO, networkErrorHandler) {
+            githubApi.getUserRepos(
+                username,
+                resultsPerPage,
+                pageNumber
+            )
+        }
     }
 
     suspend fun loadRepoZip(username: String, repoName: String): ResultWrapper<ResponseBody> {

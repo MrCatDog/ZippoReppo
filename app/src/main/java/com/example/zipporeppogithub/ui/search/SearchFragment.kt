@@ -9,10 +9,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.zipporeppogithub.R
+import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.SearchFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
+import com.google.android.material.snackbar.Snackbar
 
 class SearchFragment : Fragment() {
     private var _binding: SearchFragmentBinding? = null
@@ -39,7 +40,7 @@ class SearchFragment : Fragment() {
         }
 
         viewModel.users.observe(viewLifecycleOwner) {
-            recyclerAdapter.setData(it)
+            recyclerAdapter.setNewUsers(it)
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) {
@@ -74,9 +75,21 @@ class SearchFragment : Fragment() {
             )
         }
 
+        viewModel.additionalUsers.observe(viewLifecycleOwner) {
+            recyclerAdapter.addUsers(it)
+        }
+
+        viewModel.snackMessage.observe(viewLifecycleOwner) {
+            Snackbar.make(binding.usersList, it, Snackbar.LENGTH_LONG).show()
+        }
+
         binding.searchBar.addTextChangedListener(object : TextWatcher {
 
-            override fun afterTextChanged(s: Editable) {}
+            override fun afterTextChanged(s: Editable) {
+                if (binding.searchBar.hasFocus()) {
+                    viewModel.onSearchTextChanged(s.toString())
+                }
+            }
 
             override fun beforeTextChanged(
                 s: CharSequence, start: Int,
@@ -88,11 +101,20 @@ class SearchFragment : Fragment() {
                 s: CharSequence, start: Int,
                 before: Int, count: Int
             ) {
-                viewModel.onSearchTextChanged(s.toString())
             }
         })
 
         binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked(binding.searchBar.text.toString()) }
+
+        binding.usersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(unused: RecyclerView, dx: Int, dy: Int) {
+                viewModel.onScrolledToEnd(
+                    linearLayoutManager.findLastVisibleItemPosition(),
+                    linearLayoutManager.itemCount,
+                    binding.searchBar.text.toString()
+                )
+            }
+        })
 
         return binding.root
     }

@@ -6,7 +6,7 @@
     <string name="unknown_error_text">Unknown error! Contact with developers.</string>
     <string name="network_error_text">Network error! Check your internet connection.</string>
     <string name="not_found_error_text">Data not found! Contact with developers.</string>
-    <string name="access_denied_error_text">Access error! Contact with developers.</string>
+    <string name="access_denied_error_text">Access error! Too many requests. Try again later.</string>
     <string name="service_unavailable_error_text">Server error! Try again later.</string>
     <string name="no_permission_error_text">App need permission to work with storage</string>
     <string name="common_db_error_text">Data Base error, please, contact with developer</string>
@@ -18,4 +18,5 @@
     <string name="empty_result_text">Nothing found :(</string>
     <string name="empty_history_text">Nothing downloaded yet</string>
     <string name="empty_repos_text">Public repository not found!</string>
+    <string name="all_repos_download_text">All repos downloaded</string>
 </resources>

@@ -10,12 +10,16 @@ interface GithubApi {
 
     @GET("/search/users")
     suspend fun getUserList(
-        @Query("q") loginQuery: String
+        @Query("q") loginQuery: String,
+        @Query("per_page") resultsPerPage: Int,
+        @Query("page") pageNumber: Int
     ): GithubUserSearchResult
 
     @GET("/users/{userLogin}/repos")
     suspend fun getUserRepos(
-        @Path("userLogin") userLogin: String
+        @Path("userLogin") userLogin: String,
+        @Query("per_page") resultsPerPage: Int,
+        @Query("page") pageNumber: Int
     ) : List<GithubRepo>
 
     @Streaming

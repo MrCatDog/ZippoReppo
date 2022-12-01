@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.databinding.RepoItemBinding
 import com.example.zipporeppogithub.model.network.GithubRepo
+import com.example.zipporeppogithub.ui.search.SearchViewModel
+import com.example.zipporeppogithub.utils.REPOS_RESULT_COUNT
 import java.util.ArrayList
 
 class ReposRecyclerAdapter(
@@ -19,7 +21,7 @@ class ReposRecyclerAdapter(
         val binding = RepoItemBinding.bind(itemView)
     }
 
-    private var items: List<GithubRepo> = ArrayList()
+    private var items: ArrayList<GithubRepo> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         return VH(
@@ -44,9 +46,15 @@ class ReposRecyclerAdapter(
 
     override fun getItemCount() = items.size
 
+    fun addUsers(moreRepos: List<GithubRepo>) {
+        val lastPos = itemCount
+        items.addAll(moreRepos)
+        notifyItemRangeChanged(lastPos, REPOS_RESULT_COUNT)
+    }
+
     @SuppressLint("NotifyDataSetChanged") //all of them changed
     fun setData(items: List<GithubRepo>) {
-        this.items = items
+        this.items = ArrayList(items)
         notifyDataSetChanged()
     }
 }

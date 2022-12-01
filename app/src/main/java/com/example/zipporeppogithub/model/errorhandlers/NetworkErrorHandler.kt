@@ -1,6 +1,7 @@
 package com.example.zipporeppogithub.model.errorhandlers
 
 import com.example.zipporeppogithub.utils.ErrorEntity
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -25,6 +26,7 @@ class NetworkErrorHandler @Inject constructor(): ErrorHandler {
                     else -> ErrorEntity.UnknownError
                 }
             }
+            is CancellationException -> ErrorEntity.Cancel
             else -> ErrorEntity.UnknownError
         }
     }

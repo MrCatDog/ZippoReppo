@@ -12,6 +12,6 @@ sealed class ErrorEntity {
         object NoPermission : DBError()
         object Common: DBError()
     }
-
+    object Cancel : ErrorEntity()
     object UnknownError : ErrorEntity()
 }

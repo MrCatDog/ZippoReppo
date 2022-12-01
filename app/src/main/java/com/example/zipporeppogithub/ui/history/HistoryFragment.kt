@@ -29,7 +29,7 @@ class HistoryFragment : Fragment() {
         val recyclerAdapter = HistoryRecyclerAdapter()
         val linearLayoutManager = LinearLayoutManager(context)
 
-        binding.usersList.apply {
+        binding.historyList.apply {
             layoutManager = linearLayoutManager
             adapter = recyclerAdapter
         }

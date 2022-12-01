@@ -8,7 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.databinding.SearchResultItemBinding
 import com.example.zipporeppogithub.model.network.GithubUserSearchResult
-import java.util.ArrayList
+import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
+import kotlin.collections.ArrayList
 
 class SearchRecyclerAdapter(private val listener: (GithubUserSearchResult.User) -> Unit) :
     RecyclerView.Adapter<SearchRecyclerAdapter.VH>() {
@@ -16,7 +17,7 @@ class SearchRecyclerAdapter(private val listener: (GithubUserSearchResult.User) 
         val binding = SearchResultItemBinding.bind(itemView)
     }
 
-    private var items: List<GithubUserSearchResult.User> = ArrayList()
+    private var items: ArrayList<GithubUserSearchResult.User> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         return VH(
@@ -38,8 +39,14 @@ class SearchRecyclerAdapter(private val listener: (GithubUserSearchResult.User) 
     override fun getItemCount() = items.size
 
     @SuppressLint("NotifyDataSetChanged") //all of them changed
-    fun setData(items: List<GithubUserSearchResult.User>) {
-        this.items = items
+    fun setNewUsers(items: List<GithubUserSearchResult.User>) {
+        this.items = ArrayList(items)
         notifyDataSetChanged()
+    }
+
+    fun addUsers(moreUsers: List<GithubUserSearchResult.User>) {
+        val lastPos = itemCount
+        items.addAll(moreUsers)
+        notifyItemRangeChanged(lastPos, USERS_RESULT_COUNT)
     }
 }

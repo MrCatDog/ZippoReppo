@@ -10,9 +10,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.ReposFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
+import com.google.android.material.snackbar.Snackbar
 
 class ReposFragment : Fragment() {
 
@@ -36,10 +38,11 @@ class ReposFragment : Fragment() {
     ): View {
         _binding = ReposFragmentBinding.inflate(inflater)
 
-        val recyclerAdapter = ReposRecyclerAdapter(viewModel::downloadBtnClicked, viewModel::linkBtnClicked)
+        val recyclerAdapter =
+            ReposRecyclerAdapter(viewModel::downloadBtnClicked, viewModel::linkBtnClicked)
         val linearLayoutManager = LinearLayoutManager(context)
 
-        binding.usersList.apply {
+        binding.reposList.apply {
             layoutManager = linearLayoutManager
             adapter = recyclerAdapter
         }
@@ -67,11 +70,19 @@ class ReposFragment : Fragment() {
         }
 
         viewModel.isError.observe(viewLifecycleOwner) {
-            if(it) {
+            if (it) {
                 binding.retryBtn.visibility = View.VISIBLE
             } else {
                 binding.retryBtn.visibility = View.GONE
             }
+        }
+
+        viewModel.additionalRepos.observe(viewLifecycleOwner) {
+            recyclerAdapter.addUsers(it)
+        }
+
+        viewModel.snackMessage.observe(viewLifecycleOwner) {
+            Snackbar.make(binding.reposList, it, Snackbar.LENGTH_LONG).show()
         }
 
         viewModel.url.observe(viewLifecycleOwner) {
@@ -81,6 +92,15 @@ class ReposFragment : Fragment() {
         }
 
         binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked() }
+
+        binding.reposList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(unused: RecyclerView, dx: Int, dy: Int) {
+                viewModel.onScrolledToEnd(
+                    linearLayoutManager.findLastVisibleItemPosition(),
+                    linearLayoutManager.itemCount
+                )
+            }
+        })
 
         return binding.root
     }

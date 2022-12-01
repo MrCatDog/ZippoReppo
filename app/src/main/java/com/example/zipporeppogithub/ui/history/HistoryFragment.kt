@@ -47,6 +47,25 @@ class HistoryFragment : Fragment() {
                 }
         }
 
+        viewModel.message.observe(viewLifecycleOwner) {
+            if (it == null) {
+                binding.messageText.visibility = View.GONE
+            } else {
+                binding.messageText.setText(it)
+                binding.messageText.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.isError.observe(viewLifecycleOwner) {
+            if(it) {
+                binding.retryBtn.visibility = View.VISIBLE
+            } else {
+                binding.retryBtn.visibility = View.GONE
+            }
+        }
+
+        binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked() }
+
         return binding.root
     }
 

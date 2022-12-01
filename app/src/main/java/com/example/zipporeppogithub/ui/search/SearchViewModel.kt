@@ -31,13 +31,13 @@ class SearchViewModel
     val users: LiveData<List<GithubUserSearchResult.User>>
         get() = _users
 
-    private val _error = MutableLiveData<Int?>()
-    val error: LiveData<Int?>
-        get() = _error
+    private val _message = MutableLiveData<Int?>()
+    val message: LiveData<Int?>
+        get() = _message
 
-    private val _isAnswerEmpty = MutableLiveData(false)
-    val isAnswerEmpty: LiveData<Boolean>
-        get() = _isAnswerEmpty
+    private val _isError = MutableLiveData(false)
+    val isError: LiveData<Boolean>
+        get() = _isError
 
     private val _navigateToUserRepos = MutableLiveEvent<String>()
     val navigateToUserRepos: LiveData<String>
@@ -47,20 +47,21 @@ class SearchViewModel
 
     private suspend fun searchUsers(query: String) {
         _users.postValue(emptyList())
-        _error.postValue(null)
-        _isAnswerEmpty.postValue(false)
+        _message.postValue(null)
         _isLoading.postValue(true)
+        _isError.postValue(false)
 
         when (val answer = repository.loadUsersFromNetwork(query)) {
             is ResultWrapper.Success -> {
                 if (answer.value.resultsCount <= 0) {
-                    _isAnswerEmpty.postValue(true)
+                    _message.postValue(R.string.empty_result_text)
                 } else {
                     _users.postValue(answer.value.usersList)
                 }
             }
             is ResultWrapper.Failure -> {
-                _error.postValue(handleError(answer.error))
+                _message.postValue(handleError(answer.error))
+                _isError.postValue(true)
             }
         }
         _isLoading.postValue(false)
@@ -98,9 +99,9 @@ class SearchViewModel
             request = viewModelScope.launch(Dispatchers.IO) { searchUsers(query) }
         } else {
             _users.postValue(emptyList())
-            _error.postValue(null)
-            _isAnswerEmpty.postValue(false)
-            _isLoading.postValue(true)
+            _message.postValue(null)
+            _isLoading.postValue(false)
+            _isError.postValue(false)
         }
 
     }

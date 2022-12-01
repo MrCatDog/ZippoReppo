@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">ZippoReppoGitHub</string>
-    <string name="Search">Поиск</string>
-    <string name="History">История загрузок</string>
+    <string name="Search">Search</string>
+    <string name="History">Download history</string>
 
     <string name="unknown_error_text">Unknown error! Contact with developers.</string>
     <string name="network_error_text">Network error! Check your internet connection.</string>
@@ -16,4 +16,6 @@
     <string name="file_download_error">File download failed!</string>
     <string name="retry_btn_text">Retry</string>
     <string name="empty_result_text">Nothing found :(</string>
+    <string name="empty_history_text">Nothing downloaded yet</string>
+    <string name="empty_repos_text">Public repository not found!</string>
 </resources>

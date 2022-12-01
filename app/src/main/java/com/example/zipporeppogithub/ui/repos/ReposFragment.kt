@@ -14,7 +14,6 @@ import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.ReposFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
 
-
 class ReposFragment : Fragment() {
 
     private var _binding: ReposFragmentBinding? = null
@@ -58,11 +57,30 @@ class ReposFragment : Fragment() {
                 }
         }
 
+        viewModel.message.observe(viewLifecycleOwner) {
+            if (it == null) {
+                binding.messageText.visibility = View.GONE
+            } else {
+                binding.messageText.setText(it)
+                binding.messageText.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.isError.observe(viewLifecycleOwner) {
+            if(it) {
+                binding.retryBtn.visibility = View.VISIBLE
+            } else {
+                binding.retryBtn.visibility = View.GONE
+            }
+        }
+
         viewModel.url.observe(viewLifecycleOwner) {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(it)
             startActivity(intent)
         }
+
+        binding.retryBtn.setOnClickListener { viewModel.retryBtnClicked() }
 
         return binding.root
     }

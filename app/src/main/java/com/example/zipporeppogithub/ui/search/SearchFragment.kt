@@ -51,23 +51,20 @@ class SearchFragment : Fragment() {
                 }
         }
 
-        viewModel.error.observe(viewLifecycleOwner) {
+        viewModel.message.observe(viewLifecycleOwner) {
             if (it == null) {
                 binding.messageText.visibility = View.GONE
-                binding.retryBtn.visibility = View.GONE
             } else {
                 binding.messageText.setText(it)
                 binding.messageText.visibility = View.VISIBLE
-                binding.retryBtn.visibility = View.VISIBLE
             }
         }
 
-        viewModel.isAnswerEmpty.observe(viewLifecycleOwner) {
+        viewModel.isError.observe(viewLifecycleOwner) {
             if (it) {
-                binding.messageText.setText(R.string.empty_result_text)
-                binding.messageText.visibility = View.VISIBLE
+                binding.retryBtn.visibility = View.VISIBLE
             } else {
-                binding.messageText.visibility = View.GONE
+                binding.retryBtn.visibility = View.GONE
             }
         }
 

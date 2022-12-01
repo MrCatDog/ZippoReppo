@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.Repository
 import com.example.zipporeppogithub.model.db.HistoryRecord
-import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.utils.ErrorEntity
 import com.example.zipporeppogithub.utils.MutableLiveEvent
 import com.example.zipporeppogithub.utils.ResultWrapper
@@ -28,36 +27,40 @@ class HistoryViewModel
     val historyRecords: LiveData<List<HistoryRecord>>
         get() = _historyRecords
 
-    private val _error = MutableLiveEvent<Int>()
-    val error: LiveData<Int>
-        get() = _error
+    private val _message = MutableLiveEvent<Int?>()
+    val message: LiveData<Int?>
+        get() = _message
 
-    private val _isEmpty = MutableLiveData(false)
-    val isEmpty: LiveData<Boolean>
-        get() = _isEmpty
+    private val _isError = MutableLiveData(false)
+    val isError: LiveData<Boolean>
+        get() = _isError
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.postValue(true)
-            requestHistory()
-            _isLoading.postValue(false)
-        }
+        viewModelScope.launch(Dispatchers.IO) { requestHistory() }
     }
 
     private suspend fun requestHistory() {
+        _isError.postValue(false)
+        _message.postValue(null)
+        _historyRecords.postValue(emptyList())
+        _isLoading.postValue(true)
+
         when (val answer = repository.getDownloadHistory()) {
             is ResultWrapper.Success -> {
                 val repos = answer.value
                 if (repos.isNotEmpty()) {
                     _historyRecords.postValue(repos)
                 } else {
-                    _isEmpty.postValue(true)
+                    _message.postValue(R.string.empty_history_text)
+                    _historyRecords.postValue(emptyList())
                 }
             }
             is ResultWrapper.Failure -> {
-                _error.postValue(handleError(answer.error))
+                _message.postValue(handleError(answer.error))
+                _isError.postValue(true)
             }
         }
+        _isLoading.postValue(false)
     }
 
     private fun handleError(error: ErrorEntity): Int {
@@ -69,6 +72,10 @@ class HistoryViewModel
         } else {
             R.string.unknown_error_text
         }
+    }
+
+    fun retryBtnClicked() {
+        viewModelScope.launch(Dispatchers.IO) { requestHistory() }
     }
 
 

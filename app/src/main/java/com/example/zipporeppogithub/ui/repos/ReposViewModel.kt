@@ -35,13 +35,13 @@ class ReposViewModel
     val repos: LiveData<List<GithubRepo>>
         get() = _repos
 
-    private val _error = MutableLiveEvent<Int>()
-    val error: LiveData<Int>
-        get() = _error
+    private val _message = MutableLiveEvent<Int?>()
+    val message: LiveData<Int?>
+        get() = _message
 
-    private val _isEmpty = MutableLiveData(false)
-    val isEmpty: LiveData<Boolean>
-        get() = _isEmpty
+    private val _isError = MutableLiveData(false)
+    val isError: LiveData<Boolean>
+        get() = _isError
 
     private val _htmlUrl = MutableLiveEvent<String>()
     val url: LiveData<String>
@@ -56,27 +56,31 @@ class ReposViewModel
     }
 
     private suspend fun requestRepos(username: String) {
+        _isError.postValue(false)
+        _message.postValue(null)
+        _repos.postValue(emptyList())
+        _isLoading.postValue(true)
+
         when (val answer = repository.loadUserRepos(username)) {
             is ResultWrapper.Success -> {
                 val repos = answer.value
-                if (repos.isNotEmpty()) {
-                    _repos.postValue(repos)
-                } else {
-                    _isEmpty.postValue(true)
-                }
+                _repos.postValue(
+                    repos.ifEmpty {
+                        _message.postValue(R.string.empty_repos_text)
+                        emptyList()
+                    }
+                )
             }
             is ResultWrapper.Failure -> {
-                _error.postValue(handleError(answer.error))
+                _message.postValue(handleError(answer.error))
+                _isError.postValue(true)
             }
         }
+        _isLoading.postValue(false)
     }
 
     fun downloadBtnClicked(item: GithubRepo) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.postValue(true)
-            loadZipRepo(item.name)
-            _isLoading.postValue(false)
-        }
+        viewModelScope.launch(Dispatchers.IO) { loadZipRepo(item.name) }
     }
 
     fun linkBtnClicked(item: GithubRepo) {
@@ -84,12 +88,16 @@ class ReposViewModel
     }
 
     private suspend fun loadZipRepo(repoName: String) {
+        _isError.postValue(false)
+        _message.postValue(null)
+
         when (val answer = repository.loadRepoZip(userLogin, repoName)) {
             is ResultWrapper.Success -> {
                 saveFile(answer.value, repoName, downloadPath)
             }
             is ResultWrapper.Failure -> {
-                _error.postValue(handleError(answer.error))
+                _message.postValue(handleError(answer.error))
+                _isError.postValue(true)
             }
         }
     }
@@ -111,10 +119,9 @@ class ReposViewModel
                 }
                 output.flush()
             }
-        }catch (e:Exception){
-            _error.postValue(R.string.file_download_error)
-        }
-        finally {
+        } catch (e: Exception) {
+            _message.postValue(R.string.file_download_error)
+        } finally {
             input?.close()
         }
     }
@@ -133,6 +140,10 @@ class ReposViewModel
             }
             is ErrorEntity.UnknownError -> R.string.unknown_error_text
         }
+    }
+
+    fun retryBtnClicked() {
+        viewModelScope.launch(Dispatchers.IO) {  }
     }
 }
 

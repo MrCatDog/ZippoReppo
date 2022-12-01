@@ -36,13 +36,12 @@ class SearchFragment : Fragment() {
 
         val recyclerAdapter = SearchRecyclerAdapter(viewModel::listItemClicked)
         val linearLayoutManager = LinearLayoutManager(context)
-
         val dividerItemDecoration =
             DividerItemDecoration(binding.usersList.context, linearLayoutManager.orientation)
         dividerItemDecoration.setDrawable(
             ResourcesCompat.getDrawable(
                 resources,
-                R.drawable.divider_search_item_layout,
+                R.drawable.divider_item_layout,
                 null
             )!!
         )

@@ -4,8 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.HistoryFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
@@ -28,10 +31,20 @@ class HistoryFragment : Fragment() {
 
         val recyclerAdapter = HistoryRecyclerAdapter()
         val linearLayoutManager = LinearLayoutManager(context)
+        val dividerItemDecoration =
+            DividerItemDecoration(binding.historyList.context, linearLayoutManager.orientation)
+        dividerItemDecoration.setDrawable(
+            ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.divider_item_layout,
+                null
+            )!!
+        )
 
         binding.historyList.apply {
             layoutManager = linearLayoutManager
             adapter = recyclerAdapter
+            addItemDecoration(dividerItemDecoration)
         }
 
         viewModel.historyRecords.observe(viewLifecycleOwner) {

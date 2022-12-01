@@ -7,10 +7,13 @@ import android.os.Environment.DIRECTORY_DOWNLOADS
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.appComponent
 import com.example.zipporeppogithub.databinding.ReposFragmentBinding
 import com.example.zipporeppogithub.utils.viewModelsExt
@@ -41,10 +44,20 @@ class ReposFragment : Fragment() {
         val recyclerAdapter =
             ReposRecyclerAdapter(viewModel::downloadBtnClicked, viewModel::linkBtnClicked)
         val linearLayoutManager = LinearLayoutManager(context)
+        val dividerItemDecoration =
+            DividerItemDecoration(binding.reposList.context, linearLayoutManager.orientation)
+        dividerItemDecoration.setDrawable(
+            ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.divider_item_layout,
+                null
+            )!!
+        )
 
         binding.reposList.apply {
             layoutManager = linearLayoutManager
             adapter = recyclerAdapter
+            addItemDecoration(dividerItemDecoration)
         }
 
         viewModel.repos.observe(viewLifecycleOwner) {

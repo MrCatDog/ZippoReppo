@@ -8,4 +8,9 @@
     <dimen name="search_item_div_radius">60dp</dimen>
     <dimen name="search_item_username_size">20sp</dimen>
     <dimen name="search_item_div_padding_vert">10dp</dimen>
+    <dimen name="history_item_margin">10dp</dimen>
+    <dimen name="history_item_date_size">16sp</dimen>
+    <dimen name="history_item_repo_title_size">20sp</dimen>
+    <dimen name="history_item_username_size">20sp</dimen>
+    <dimen name="repo_item_margin">5dp</dimen>
 </resources>

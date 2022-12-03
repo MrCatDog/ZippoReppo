@@ -8,12 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.databinding.RepoItemBinding
 import com.example.zipporeppogithub.model.network.GithubRepo
-import com.example.zipporeppogithub.ui.search.SearchViewModel
 import com.example.zipporeppogithub.utils.REPOS_RESULT_COUNT
 import java.util.ArrayList
 
 class ReposRecyclerAdapter(
-    private val downloadBtnListener: (GithubRepo) -> Unit,
+    private val downloadBtnListener: (GithubRepo, Int) -> Unit,
     private val linkBtnListener: (GithubRepo) -> Unit
 ) :
     RecyclerView.Adapter<ReposRecyclerAdapter.VH>() {
@@ -36,7 +35,7 @@ class ReposRecyclerAdapter(
         holder.binding.repoTitle.text = item.name
 
         holder.binding.repoDownload.setOnClickListener {
-            downloadBtnListener(item)
+            downloadBtnListener(item, position)
         }
 
         holder.binding.repoOpenInBrowser.setOnClickListener {

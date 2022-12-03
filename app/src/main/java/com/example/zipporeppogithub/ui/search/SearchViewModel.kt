@@ -1,5 +1,6 @@
 package com.example.zipporeppogithub.ui.search
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,7 +11,6 @@ import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.utils.ErrorEntity
 import com.example.zipporeppogithub.utils.ErrorEntity.ApiError.*
 import com.example.zipporeppogithub.utils.ErrorEntity.DBError.*
-import com.example.zipporeppogithub.utils.ErrorEntity.UnknownError
 import com.example.zipporeppogithub.utils.MutableLiveEvent
 import com.example.zipporeppogithub.utils.ResultWrapper
 import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
@@ -99,7 +99,7 @@ class SearchViewModel
                 Common -> R.string.common_db_error_text
             }
             is ErrorEntity.Cancel -> null
-            is UnknownError -> R.string.unknown_error_text
+            else -> R.string.unknown_error_text
         }
     }
 
@@ -135,6 +135,8 @@ class SearchViewModel
         }
     }
 
+    //Suppress на _snackMessage.postValue(errMsg) - баг линта.
+    @SuppressLint("NullSafeMutableLiveData")
     fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int, query: String) {
         if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
             if (request?.isActive == true) {

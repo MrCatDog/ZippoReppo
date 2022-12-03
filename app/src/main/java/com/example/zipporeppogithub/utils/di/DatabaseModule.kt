@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.zipporeppogithub.model.db.HistoryDao
 import com.example.zipporeppogithub.model.db.HistoryDatabase
 import com.example.zipporeppogithub.model.errorhandlers.DBErrorHandler
+import com.example.zipporeppogithub.model.errorhandlers.ExternalStorageErrorHandler
 import com.example.zipporeppogithub.utils.DATABASE_NAME
 import dagger.Module
 import dagger.Provides
@@ -30,5 +31,8 @@ class DatabaseModule {
 
     @Provides
     fun provideDBErrorHandler(): DBErrorHandler = DBErrorHandler()
+
+    @Provides
+    fun provideExternalErrorHandler(): ExternalStorageErrorHandler = ExternalStorageErrorHandler()
 
 }

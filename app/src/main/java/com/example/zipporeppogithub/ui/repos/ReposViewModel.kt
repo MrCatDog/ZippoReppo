@@ -9,10 +9,7 @@ import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.Repository
 import com.example.zipporeppogithub.model.db.HistoryRecord
 import com.example.zipporeppogithub.model.network.GithubRepo
-import com.example.zipporeppogithub.utils.ErrorEntity
-import com.example.zipporeppogithub.utils.MutableLiveEvent
-import com.example.zipporeppogithub.utils.REPOS_RESULT_COUNT
-import com.example.zipporeppogithub.utils.ResultWrapper
+import com.example.zipporeppogithub.utils.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -20,7 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
+import java.text.SimpleDateFormat
 import java.util.*
+
 
 class ReposViewModel
 @AssistedInject constructor(
@@ -31,6 +30,8 @@ class ReposViewModel
 
     companion object {
         const val VISIBLE_THRESHOLD = 5
+        const val FILE_EXTENSION = ".zip"
+        const val BUFF_SIZE = 4096
     }
 
     private val _isLoading = MutableLiveData(false)
@@ -61,9 +62,14 @@ class ReposViewModel
     val url: LiveData<String>
         get() = _htmlUrl
 
+    private val _isPermissionRequested = MutableLiveEvent<Boolean>()
+    val isPermissionRequested: LiveData<Boolean>
+        get() = _isPermissionRequested
+
     private var request: Job? = null
     private var resultsPage: Int = 1
     private var allDownloaded = false
+    private var permissions = false
 
     init {
         viewModelScope.launch(Dispatchers.IO) { searchNew(userLogin) }
@@ -97,19 +103,22 @@ class ReposViewModel
         _isLoading.postValue(false)
     }
 
-    fun downloadBtnClicked(item: GithubRepo) {
-        viewModelScope.launch(Dispatchers.IO) { loadZipRepo(item.name) }
+    fun downloadBtnClicked(item: GithubRepo, pos: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isPermissionRequested.postValue(true)
+            loadZipRepo(item.name)
+        }
     }
 
-    fun linkBtnClicked(item: GithubRepo) {
-        _htmlUrl.postValue(item.url)
+    fun setPermissionAnswer(answer: Boolean) {
+        permissions = answer
     }
 
-    private suspend fun saveDownloadHistoryRecord(repoName: String) {
+    private suspend fun saveDownloadHistoryRecord(repoName: String, dateTime: String) {
         repository.saveDownloadInHistory(
             HistoryRecord(
                 userLogin, repoName,
-                Calendar.getInstance().time
+                dateTime
             )
         )
     }
@@ -131,28 +140,21 @@ class ReposViewModel
     }
 
     private suspend fun saveFile(body: ResponseBody, repoName: String, path: String) {
-//        val workManager = WorkManager.getInstance(Context)
-//        workManager.enqueue(OneTimeWorkRequest.Builder(FooWorker::class).build())
-//todo
-//
-//        var input: InputStream? = null
-//        try {
-//            input = body.byteStream()
-//            val fos = FileOutputStream(path.plus("/").plus(repoName))
-//            fos.use { output ->
-//                val buffer = ByteArray(4 * 1024) // or other buffer size
-//                var read: Int
-//                while (input.read(buffer).also { read = it } != -1) {
-//                    output.write(buffer, 0, read)
-//                }
-//                output.flush()
-//            }
-//        } catch (e: Exception) {
-//            _message.postValue(R.string.file_download_error)
-//        } finally {
-//            input?.close()
-//        }
-        saveDownloadHistoryRecord(repoName)
+        val dateTime: String =
+            SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Calendar.getInstance().time)
+
+        when (val answer = repository.saveFileInExternalStorage(
+            body,
+            "$path/$repoName-$userLogin-$dateTime$FILE_EXTENSION"
+        )) {
+            is ResultWrapper.Success -> {
+                saveDownloadHistoryRecord(repoName, dateTime)
+                _snackMessage.postValue(R.string.file_downlod_succes)
+            }
+            is ResultWrapper.Failure -> {
+                _snackMessage.postValue(handleError(answer.error))
+            }
+        }
     }
 
     private fun handleError(error: ErrorEntity): Int? {
@@ -168,14 +170,22 @@ class ReposViewModel
                 ErrorEntity.DBError.Common -> R.string.common_db_error_text
             }
             is ErrorEntity.Cancel -> null
+            is ErrorEntity.ExtError -> when (error) {
+                ErrorEntity.ExtError.Permission -> R.string.no_permission_error_text
+                ErrorEntity.ExtError.Common -> R.string.file_download_error
+            }
             is ErrorEntity.UnknownError -> R.string.unknown_error_text
         }
     }
 
     fun retryBtnClicked() {
         viewModelScope.launch(Dispatchers.IO) {
-            //todo
+            searchNew(userLogin)
         }
+    }
+
+    fun linkBtnClicked(item: GithubRepo) {
+        _htmlUrl.postValue(item.url)
     }
 
     //Suppress на _additionalRepos.postValue(answer.value)

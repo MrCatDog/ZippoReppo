@@ -29,7 +29,7 @@ class HistoryRecyclerAdapter : RecyclerView.Adapter<HistoryRecyclerAdapter.VH>()
         val item = items[position]
         holder.binding.repoTitle.text = item.repoName
         holder.binding.username.text = item.userLogin
-        holder.binding.downloadDate.text = item.getFormattedDate()
+        holder.binding.downloadDate.text = item.dateAndTime
     }
 
     override fun getItemCount() = items.size

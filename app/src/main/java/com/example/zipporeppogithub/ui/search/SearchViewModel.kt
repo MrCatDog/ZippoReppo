@@ -8,11 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.Repository
 import com.example.zipporeppogithub.model.network.GithubUserSearchResult
-import com.example.zipporeppogithub.utils.ErrorEntity
-import com.example.zipporeppogithub.utils.ErrorEntity.ApiError.*
-import com.example.zipporeppogithub.utils.ErrorEntity.DBError.*
+import com.example.zipporeppogithub.model.ErrorEntity
+import com.example.zipporeppogithub.model.ErrorEntity.ApiError.*
+import com.example.zipporeppogithub.model.ErrorEntity.DBError.*
 import com.example.zipporeppogithub.utils.MutableLiveEvent
-import com.example.zipporeppogithub.utils.ResultWrapper
+import com.example.zipporeppogithub.model.ResultWrapper
 import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
 import kotlinx.coroutines.*
 import javax.inject.Inject

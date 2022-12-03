@@ -10,7 +10,6 @@ import com.example.zipporeppogithub.model.network.GithubApi
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.ui.repos.ReposViewModel
-import com.example.zipporeppogithub.utils.ResultWrapper
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

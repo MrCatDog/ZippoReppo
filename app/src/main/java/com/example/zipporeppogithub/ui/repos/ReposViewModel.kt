@@ -6,7 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
+import com.example.zipporeppogithub.model.ErrorEntity
 import com.example.zipporeppogithub.model.Repository
+import com.example.zipporeppogithub.model.ResultWrapper
 import com.example.zipporeppogithub.model.db.HistoryRecord
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.utils.*

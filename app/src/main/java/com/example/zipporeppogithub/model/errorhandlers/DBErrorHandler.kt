@@ -2,7 +2,7 @@ package com.example.zipporeppogithub.model.errorhandlers
 
 import android.database.sqlite.SQLiteAccessPermException
 import android.database.sqlite.SQLiteException
-import com.example.zipporeppogithub.utils.ErrorEntity
+import com.example.zipporeppogithub.model.ErrorEntity
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 

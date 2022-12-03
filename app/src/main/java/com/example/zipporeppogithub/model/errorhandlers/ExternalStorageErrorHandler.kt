@@ -1,6 +1,6 @@
 package com.example.zipporeppogithub.model.errorhandlers
 
-import com.example.zipporeppogithub.utils.ErrorEntity
+import com.example.zipporeppogithub.model.ErrorEntity
 import kotlinx.coroutines.CancellationException
 import java.io.FileNotFoundException
 import javax.inject.Inject

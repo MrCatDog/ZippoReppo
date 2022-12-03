@@ -1,4 +1,4 @@
-package com.example.zipporeppogithub.utils
+package com.example.zipporeppogithub.model
 
 sealed class ErrorEntity {
     sealed class ApiError : ErrorEntity() {

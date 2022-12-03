@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.Repository
 import com.example.zipporeppogithub.model.db.HistoryRecord
-import com.example.zipporeppogithub.utils.ErrorEntity
+import com.example.zipporeppogithub.model.ErrorEntity
 import com.example.zipporeppogithub.utils.MutableLiveEvent
-import com.example.zipporeppogithub.utils.ResultWrapper
+import com.example.zipporeppogithub.model.ResultWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject

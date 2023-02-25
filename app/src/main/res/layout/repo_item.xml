@@ -48,4 +48,14 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ProgressBar
+        android:layout_width="@dimen/download_repo_img_size"
+        android:layout_height="@dimen/download_repo_img_size"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/download_barrier"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

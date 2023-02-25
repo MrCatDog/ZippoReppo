@@ -31,12 +31,8 @@ class ReposFragment : Fragment() {
     init {
         this.activityResultLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
-        ) { result ->
-            var isAllGranted = true
-            for (isGranted in result.values) {
-                isAllGranted = isAllGranted && isGranted
-            }
-            viewModel.setPermissionAnswer(isAllGranted)
+        ) { result -> //todo передать result в VM, там обработать, если есть разрешение - качать, нет - сообщить
+            viewModel.setPermissionAnswer(result)
         }
     }
 
@@ -91,9 +87,7 @@ class ReposFragment : Fragment() {
             }
         })
 
-        viewModel.repos.observe(viewLifecycleOwner) {
-            recyclerAdapter.setData(it)
-        }
+        viewModel.reposToShow.observe(viewLifecycleOwner) { recyclerAdapter.setData(it) }
 
         viewModel.isLoading.observe(viewLifecycleOwner) {
             binding.progressbar.visibility =
@@ -122,7 +116,7 @@ class ReposFragment : Fragment() {
         }
 
         viewModel.additionalRepos.observe(viewLifecycleOwner) {
-            recyclerAdapter.addUsers(it)
+            recyclerAdapter.addReposToShow(it)
         }
 
         viewModel.snackMessage.observe(viewLifecycleOwner) {
@@ -142,7 +136,6 @@ class ReposFragment : Fragment() {
             )
             activityResultLauncher.launch(externalPerms)
         }
-
         return binding.root
     }
 

@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.databinding.RepoItemBinding
 import com.example.zipporeppogithub.model.network.GithubRepo
-import com.example.zipporeppogithub.utils.REPOS_RESULT_COUNT
 import java.util.ArrayList
 
 class ReposRecyclerAdapter(
@@ -45,10 +44,10 @@ class ReposRecyclerAdapter(
 
     override fun getItemCount() = items.size
 
-    fun addUsers(moreRepos: List<GithubRepo>) {
+    fun addReposToShow(moreRepos: List<GithubRepo>) {
         val lastPos = itemCount
         items.addAll(moreRepos)
-        notifyItemRangeChanged(lastPos, REPOS_RESULT_COUNT)
+        notifyItemRangeChanged(lastPos, moreRepos.size)
     }
 
     @SuppressLint("NotifyDataSetChanged") //all of them changed

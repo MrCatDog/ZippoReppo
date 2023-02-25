@@ -21,7 +21,11 @@ import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
+fun <T> MutableLiveData<T>.notifyObserver() {
+    this.value = this.value
+}
 
 class ReposViewModel
 @AssistedInject constructor(
@@ -40,9 +44,9 @@ class ReposViewModel
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    private val _repos = MutableLiveData<List<GithubRepo>>()
-    val repos: LiveData<List<GithubRepo>>
-        get() = _repos
+    private val _reposToShow = MutableLiveData<List<GithubRepo>>()
+    val reposToShow: LiveData<List<GithubRepo>>
+        get() = _reposToShow
 
     private val _additionalRepos = MutableLiveData<List<GithubRepo>>()
     val additionalRepos: LiveData<List<GithubRepo>>
@@ -71,7 +75,7 @@ class ReposViewModel
     private var request: Job? = null
     private var resultsPage: Int = 1
     private var allDownloaded = false
-    private var permissions = false
+    private val reposToDownload = ArrayList<String>()
 
     init {
         viewModelScope.launch(Dispatchers.IO) { searchNew(userLogin) }
@@ -87,7 +91,7 @@ class ReposViewModel
         when (val answer = searchRepos(query)) {
             is ResultWrapper.Success -> {
                 val repos = answer.value
-                _repos.postValue(
+                _reposToShow.postValue(
                     repos.ifEmpty {
                         _message.postValue(R.string.empty_repos_text)
                         emptyList()
@@ -106,14 +110,23 @@ class ReposViewModel
     }
 
     fun downloadBtnClicked(item: GithubRepo, pos: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isPermissionRequested.postValue(true)
-            loadZipRepo(item.name)
-        }
+        reposToDownload.add(item.name)
+        _isPermissionRequested.postValue(true)
     }
 
-    fun setPermissionAnswer(answer: Boolean) {
-        permissions = answer
+    fun setPermissionAnswer(answer: Map<String, Boolean>) {
+        var isAllGranted = true
+        for (isGranted in answer.values) {
+            isAllGranted = isAllGranted && isGranted
+        }
+        if(isAllGranted) {
+            viewModelScope.launch(Dispatchers.IO) {
+                reposToDownload.forEach { loadZipRepo(it) }
+            }
+        } else {
+            reposToDownload.clear()
+            //todo explaining UI
+        }
     }
 
     private suspend fun saveDownloadHistoryRecord(repoName: String, dateTime: String) {
@@ -145,6 +158,7 @@ class ReposViewModel
         val dateTime: String =
             SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Calendar.getInstance().time)
 
+        //todo всё в worker
         when (val answer = repository.saveFileInExternalStorage(
             body,
             "$path/$repoName-$userLogin-$dateTime$FILE_EXTENSION"

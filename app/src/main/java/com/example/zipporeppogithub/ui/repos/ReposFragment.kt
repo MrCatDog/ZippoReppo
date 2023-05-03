@@ -98,7 +98,7 @@ class ReposFragment : Fragment() {
                 }
         }
 
-        viewModel.message.observe(viewLifecycleOwner) {
+        viewModel.centerErrMessage.observe(viewLifecycleOwner) {
             if (it == null) {
                 binding.messageText.visibility = View.GONE
             } else {
@@ -136,6 +136,7 @@ class ReposFragment : Fragment() {
             )
             activityResultLauncher.launch(externalPerms)
         }
+
         return binding.root
     }
 

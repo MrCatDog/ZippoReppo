@@ -23,10 +23,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-fun <T> MutableLiveData<T>.notifyObserver() {
-    this.value = this.value
-}
-
 class ReposViewModel
 @AssistedInject constructor(
     private val repository: Repository,
@@ -52,9 +48,9 @@ class ReposViewModel
     val additionalRepos: LiveData<List<GithubRepo>>
         get() = _additionalRepos
 
-    private val _message = MutableLiveEvent<Int?>()
-    val message: LiveData<Int?>
-        get() = _message
+    private val _centerErrMessage = MutableLiveEvent<Int?>()
+    val centerErrMessage: LiveData<Int?>
+        get() = _centerErrMessage
 
     private val _snackMessage = MutableLiveEvent<Int>()
     val snackMessage: LiveData<Int>
@@ -85,7 +81,7 @@ class ReposViewModel
         repository.loadUserRepos(query, REPOS_RESULT_COUNT, resultsPage)
 
     private suspend fun searchNew(query: String) {
-        _message.postValue(null)
+        _centerErrMessage.postValue(null)
         _isError.postValue(false)
         _isLoading.postValue(true)
         when (val answer = searchRepos(query)) {
@@ -93,7 +89,7 @@ class ReposViewModel
                 val repos = answer.value
                 _reposToShow.postValue(
                     repos.ifEmpty {
-                        _message.postValue(R.string.empty_repos_text)
+                        _centerErrMessage.postValue(R.string.empty_repos_text)
                         emptyList()
                     }
                 )
@@ -101,7 +97,7 @@ class ReposViewModel
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _message.postValue(errMsg)
+                    _centerErrMessage.postValue(errMsg)
                     _isError.postValue(true)
                 }
             }
@@ -125,7 +121,7 @@ class ReposViewModel
             }
         } else {
             reposToDownload.clear()
-            //todo explaining UI
+            _snackMessage.postValue(R.string.no_permission_error_text)
         }
     }
 

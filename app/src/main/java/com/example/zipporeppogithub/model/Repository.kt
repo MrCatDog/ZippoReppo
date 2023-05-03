@@ -69,7 +69,7 @@ class Repository @Inject constructor(
         }
     }
 
-    suspend fun saveFileInExternalStorage(file: ResponseBody, path: String) : ResultWrapper<Unit> {
+    suspend fun saveFileInExternalStorage(file: ResponseBody, path: String): ResultWrapper<Unit> {
         return safeCall(Dispatchers.IO, externalStorageErrorHandler) {
             saveFile(file, path)
         }
@@ -98,12 +98,11 @@ class Repository @Inject constructor(
         errorHandler: ErrorHandler,
         call: suspend () -> T
     ): ResultWrapper<T> {
-        return withContext(dispatcher) {
-            try {
-                ResultWrapper.Success(call.invoke())
-            } catch (throwable: Throwable) {
-                ResultWrapper.Failure(errorHandler.handleError(throwable))
-            }
+        return try {
+            ResultWrapper.Success(call.invoke())
+        } catch (throwable: Throwable) {
+            ResultWrapper.Failure(errorHandler.handleError(throwable))
         }
     }
+
 }

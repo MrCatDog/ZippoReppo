@@ -105,7 +105,7 @@ class ReposViewModel
         _isLoading.postValue(false)
     }
 
-    fun downloadBtnClicked(item: GithubRepo, pos: Int) {
+    fun downloadBtnClicked(item: GithubRepo) {
         reposToDownload.add(item.name)
         _isPermissionRequested.postValue(true)
     }

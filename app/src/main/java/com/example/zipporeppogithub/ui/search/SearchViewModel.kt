@@ -15,6 +15,9 @@ import com.example.zipporeppogithub.utils.MutableLiveEvent
 import com.example.zipporeppogithub.model.ResultWrapper
 import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class SearchViewModel
@@ -54,6 +57,9 @@ class SearchViewModel
     private val _navigateToUserRepos = MutableLiveEvent<String>()
     val navigateToUserRepos: LiveData<String>
         get() = _navigateToUserRepos
+
+    private val _uiState = MutableStateFlow<UserSearchUiState>(UserSearchUiState.UsersSearchNoItemsState)
+    val uiState : StateFlow<UserSearchUiState> = _uiState.asStateFlow()
 
     private var request: Job? = null
     private var resultsPage: Int = 1

@@ -20,4 +20,6 @@
     <string name="empty_repos_text">Public repository not found!</string>
     <string name="all_repos_download_text">All repos downloaded</string>
     <string name="file_downlod_succes">Zip downloaded!</string>
+
+    <string name="search_input_invite">Who are we searching?</string>
 </resources>

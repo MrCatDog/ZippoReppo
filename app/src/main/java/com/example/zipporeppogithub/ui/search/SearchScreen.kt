@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -25,7 +26,8 @@ import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 
 @Composable
 fun SearchScreen(
-    userSearchViewModel: SearchViewModel
+    userSearchViewModel: SearchViewModel,
+    onUserClick: (item: GithubUserSearchResult.User) -> Unit
 ) {
 
 //    val userSearchUiState = userSearchViewModel.uiState.collectAsState().value
@@ -40,6 +42,7 @@ fun SearchScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
+//    val scrollStateLazy = rememberLazyListState()
     val isEndReached by remember {
         derivedStateOf {
             scrollState.value >= scrollState.maxValue - 5
@@ -48,7 +51,11 @@ fun SearchScreen(
 
     if (isEndReached) {
         LaunchedEffect(Unit) {
-            userSearchViewModel.onScrolledToEnd(scrollState.value, scrollState.maxValue, searchQuery) //todo это нужно ещё отработать, когда запрос выполнится
+            userSearchViewModel.onScrolledToEnd(
+                scrollState.value,
+                scrollState.maxValue,
+                searchQuery
+            ) //todo это нужно ещё отработать, когда запрос выполнится
         }
     }
 
@@ -70,7 +77,7 @@ fun SearchScreen(
         LazyColumn {
             if (users != null) {
                 items(users) {
-                    SearchResultItem(user = it, userSearchViewModel::listItemClicked)
+                    SearchResultItem(user = it, onUserClick)
                 }
             }
         }

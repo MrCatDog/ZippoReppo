@@ -26,4 +26,5 @@ object Graph {
     const val ROOT = "root_graph"
     const val SPLASH = "splash"
     const val HOME = "home_graph"
+    const val REPOS = "repos"
 }

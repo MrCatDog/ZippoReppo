@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.zipporeppogithub.R
@@ -43,17 +45,25 @@ fun ReposScreen(
     ) {
         if (repos != null) {
             items(repos) {
-                RepoItem(repo = it, viewModel::downloadBtnClicked, viewModel::linkBtnClicked)
+                RepoItem(
+                    RepoItemData(
+                        repo = it,
+                        viewModel::downloadBtnClicked,
+                        viewModel::linkBtnClicked
+                    )
+                )
             }
         }
     }
 }
 
+@Preview
 @Composable
 fun RepoItem(
-    repo: GithubRepo,
-    downloadBtnCallback: (GithubRepo) -> Unit,
-    linkBtnCallback: (GithubRepo) -> Unit
+    @PreviewParameter(RepoProvider::class) buildData: RepoItemData,
+//    repo: GithubRepo,
+//    downloadBtnCallback: (GithubRepo) -> Unit,
+//    linkBtnCallback: (GithubRepo) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -62,26 +72,51 @@ fun RepoItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column() {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
-                text = repo.name,
-                fontSize = dimensionResource(id = R.dimen.history_item_repo_title_size).value.sp,
-                maxLines = 2, overflow = TextOverflow.Ellipsis
+                text = buildData.repo.name,
+                fontSize = dimensionResource(id = R.dimen.history_item_repo_title_size).value.sp
             )
-            Button(onClick = { linkBtnCallback(repo) }) {
+            Button(onClick = { buildData.linkBtnCallback(buildData.repo) }) {
                 Text(
                     text = stringResource(id = R.string.repo_open_in_browser_btn_text)
                 )
             }
         }
-        Button(onClick = { downloadBtnCallback(repo) }) {
+        Button(
+            onClick = { buildData.downloadBtnCallback(buildData.repo) }) {
             Icon(
+                modifier = Modifier
+                    .size(dimensionResource(id = R.dimen.download_repo_img_size).value.dp),//todo нужно ли тут это .value.dp
                 painter = painterResource(id = R.drawable.repo_download_img),
                 contentDescription = stringResource(
                     id = R.string.repo_download_content_desc
-                ),
-                Modifier.size(dimensionResource(id = R.dimen.download_repo_img_size).value.dp) //todo нужно ли тут это .value.dp
+                )
             )
         }
     }
 }
+
+//колхозить вот это каждый раз чтобы просто посмотреть как это будет выглядеть...
+class RepoProvider : PreviewParameterProvider<RepoItemData> {
+    override val values = sequenceOf(
+        RepoItemData(
+            repo = GithubRepo(
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFf",
+                "url"
+            ), downloadBtnCallback = {}, linkBtnCallback = {}),
+        RepoItemData(
+            repo = GithubRepo(
+                "LittleText",
+                "url"
+            ), downloadBtnCallback = {}, linkBtnCallback = {})
+    )
+}
+
+data class RepoItemData(
+    val repo: GithubRepo,
+    val downloadBtnCallback: (GithubRepo) -> Unit,
+    val linkBtnCallback: (GithubRepo) -> Unit
+)

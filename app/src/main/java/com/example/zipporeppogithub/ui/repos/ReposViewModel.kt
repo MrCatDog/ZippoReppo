@@ -154,7 +154,7 @@ class ReposViewModel
         val dateTime: String =
             SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Calendar.getInstance().time)
 
-        //todo всё в worker
+        //todo всё в worker?
         when (val answer = repository.saveFileInExternalStorage(
             body,
             "$path/$repoName-$userLogin-$dateTime$FILE_EXTENSION"

@@ -3,6 +3,8 @@
     <dimen name="repo_item_text_size">20sp</dimen>
     <dimen name="splash_logo_size">144dp</dimen>
 
+    <dimen name="bottom_nav_item_font_size">10sp</dimen>
+
     <dimen name="search_item_padding">5dp</dimen>
     <dimen name="search_item_div_height">2dp</dimen>
     <dimen name="search_item_div_radius">60dp</dimen>
@@ -16,6 +18,4 @@
 
     <dimen name="repo_item_margin">5dp</dimen>
     <dimen name="download_repo_img_size">36dp</dimen>
-
-    <dimen name="bottom_nav_text_size">9sp</dimen>
 </resources>

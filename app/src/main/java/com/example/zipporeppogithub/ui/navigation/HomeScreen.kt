@@ -63,18 +63,11 @@ fun NavGraphBuilder.addDownloadsNavGraph(navController: NavHostController) {
         }
 
         composable(route = Screen.Repos.navRoute + "/{userLogin}") {
-//            val parentEntry =
-//                remember(it) {
-//                    navController.getBackStackEntry(
-//                        Screen.NestedGraphRepos.navRoute + "/{userLogin}"
-//                    )
-//                }
-//            val userId = parentEntry.arguments?.getString("userLogin")!! //todo !!
             val context = LocalContext.current
             val viewModel: ReposViewModel = daggerViewModel {
                 DaggerAppComponent.builder().applicationContext(context).build()
                     .provideReposViewModelFactory().create(
-                        userLogin = it.arguments!!.getString("userLogin")!!,
+                        userLogin = it.arguments!!.getString("userLogin")!!,//todo !!
                         downloadPath = Environment.getExternalStoragePublicDirectory(
                             DIRECTORY_DOWNLOADS
                         ).path

@@ -5,14 +5,17 @@ import android.os.Environment.DIRECTORY_DOWNLOADS
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.zipporeppogithub.ui.history.HistoryScreen
 import com.example.zipporeppogithub.ui.history.HistoryViewModel
 import com.example.zipporeppogithub.ui.repos.ReposScreen
@@ -39,7 +42,7 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
                         .provideSearchViewModel()
                 }
                 SearchScreen(viewModel) { user ->
-                    navController.navigate(Graph.REPOS + "/" + user.username)
+                    navController.navigate(Screen.Repos.navRoute + "/" + user.username)//todo args
                 }
             }
 
@@ -52,38 +55,49 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
                 HistoryScreen(viewModel)
             }
 
-            composable(Graph.REPOS + "/{userId}") {
-                val context = LocalContext.current
-                val viewModel: ReposViewModel = daggerViewModel {
-                    DaggerAppComponent.builder().applicationContext(context).build()
-                        .provideReposViewModelFactory().create(
-                            userLogin = it.arguments!!.getString("userId")!!,
-                            downloadPath = Environment.getExternalStoragePublicDirectory(
-                                DIRECTORY_DOWNLOADS
-                            ).path
-                        )
-                }
-                ReposScreen(viewModel = viewModel)
-            }
-//            reposNavGraph(navController = navController)
+//            composable(Screen.Repos.navRoute + "/{userId}") {
+//                val context = LocalContext.current
+//                val viewModel: ReposViewModel = daggerViewModel {
+//                    DaggerAppComponent.builder().applicationContext(context).build()
+//                        .provideReposViewModelFactory().create(
+//                            userLogin = it.arguments!!.getString("userId")!!,
+//                            downloadPath = Environment.getExternalStoragePublicDirectory(
+//                                DIRECTORY_DOWNLOADS
+//                            ).path
+//                        )
+//                }
+//                ReposScreen(viewModel = viewModel)
+//            }
+            reposNavGraph(navController)
         }
     }
 }
 
-//fun NavGraphBuilder.reposNavGraph(navController: NavHostController) {
-//    navigation(
-//        route = Graph.REPOS,
-//        startDestination = DetailsScreen.Information.route
-//    ) {
-//        composable(route = DetailsScreen.Information.route) {
-//            ScreenContent(name = DetailsScreen.Information.route) {
-//                navController.navigate(DetailsScreen.Overview.route)
-//            }
-//        }
-//    }
-//}
-//
-//sealed class DetailsScreen(val route: String) {
-//    object Information : DetailsScreen(route = "INFORMATION")
-//    object Overview : DetailsScreen(route = "OVERVIEW")
-//}
+fun NavGraphBuilder.reposNavGraph(navController: NavHostController) {
+    navigation(
+        route = Screen.NestedGraphRepos.navRoute + "?userLogin={userLogin}",
+        startDestination = Screen.Repos.navRoute,
+        arguments = listOf(navArgument("userLogin") { type = NavType.StringType })
+    ) {
+        composable(route = Screen.Repos.navRoute + "/{userLogin}") {
+            val parentEntry =
+                remember(it) {
+                    navController.getBackStackEntry(
+                        Screen.NestedGraphRepos.navRoute + "?userLogin={userLogin}"
+                    )
+                }
+            val userId = parentEntry.arguments?.getString("userLogin")!! //todo !!
+            val context = LocalContext.current
+            val viewModel: ReposViewModel = daggerViewModel {
+                DaggerAppComponent.builder().applicationContext(context).build()
+                    .provideReposViewModelFactory().create(
+                        userLogin = userId,
+                        downloadPath = Environment.getExternalStoragePublicDirectory(
+                            DIRECTORY_DOWNLOADS
+                        ).path
+                    )
+            }
+            ReposScreen(viewModel = viewModel)
+        }
+    }
+}

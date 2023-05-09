@@ -12,15 +12,15 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import com.example.zipporeppogithub.R
-import com.example.zipporeppogithub.ui.navigation.Graph
+import com.example.zipporeppogithub.ui.navigation.Screen
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(navigationToHomeScreen: () -> Unit) {
 
     LaunchedEffect(Unit) {
         delay(1000) //todo проверить может это не тут сохранять
-        navController.navigate(Graph.HOME)
+        navigationToHomeScreen.invoke()
     }
 
     Box(

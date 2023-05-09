@@ -10,21 +10,14 @@ import com.example.zipporeppogithub.ui.SplashScreen
 fun RootNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        route = Graph.ROOT,
-        startDestination = Graph.SPLASH
+        route = Screen.Root.navRoute,
+        startDestination = Screen.Splash.navRoute
     ) {
-        composable(route = Graph.SPLASH) {
-            SplashScreen(navController)
+        composable(route = Screen.Splash.navRoute) {
+            SplashScreen { navController.navigate(Screen.Home.navRoute) }
         }
-        composable(route = Graph.HOME) {
+        composable(route = Screen.Home.navRoute) {
             HomeScreen()
         }
     }
-}
-
-object Graph {
-    const val ROOT = "root_graph"
-    const val SPLASH = "splash"
-    const val HOME = "home_graph"
-    const val REPOS = "repos"
 }

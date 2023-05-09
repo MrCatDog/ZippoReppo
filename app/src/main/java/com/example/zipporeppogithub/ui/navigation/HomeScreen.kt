@@ -28,6 +28,7 @@ fun HomeScreen(navController: NavHostController) {
     ) {
         NavHost(
             navController,
+            route = Screen.Home.navRoute,
             startDestination = BottomNavItem.Search.navDestination,
             modifier = Modifier.padding(it)
         ) {

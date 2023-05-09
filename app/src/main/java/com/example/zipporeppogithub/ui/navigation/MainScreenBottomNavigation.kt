@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
@@ -19,14 +20,14 @@ fun MainScreenBottomNavigation(navController: NavController) {
     )
     BottomNavigation {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+        val currentDestination = navBackStackEntry?.destination
         items.forEach { item ->
             BottomNavigationItem(
                 icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
                 label = { Text(text = item.title,
-                    fontSize = 9.sp) },
+                    fontSize = 9.sp) }, //todo убрать отсюда
                 alwaysShowLabel = true,
-                selected = currentRoute == item.navDestination,
+                selected = currentDestination?.hierarchy?.any { it.route == item.navDestination } == true,
                 onClick = {
                     navController.navigate(item.navDestination) {
                         navController.graph.startDestinationRoute?.let { screen_route ->

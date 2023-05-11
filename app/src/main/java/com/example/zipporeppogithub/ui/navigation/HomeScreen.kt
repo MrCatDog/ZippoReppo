@@ -57,8 +57,8 @@ fun NavGraphBuilder.addDownloadsNavGraph(navController: NavHostController) {
                 DaggerAppComponent.builder().applicationContext(context).build()
                     .provideSearchViewModel()
             }
-            SearchScreen(viewModel) { user ->
-                navController.navigate(Screen.Repos.navRoute + "/" + user.username)//todo args
+            SearchScreen(viewModel) { userLogin ->
+                navController.navigate(Screen.Repos.navRoute + "/" + userLogin)//todo args
             }
         }
 

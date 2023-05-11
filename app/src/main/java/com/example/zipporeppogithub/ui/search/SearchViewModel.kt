@@ -1,8 +1,5 @@
 package com.example.zipporeppogithub.ui.search
 
-import android.annotation.SuppressLint
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
@@ -11,13 +8,11 @@ import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.model.ErrorEntity
 import com.example.zipporeppogithub.model.ErrorEntity.ApiError.*
 import com.example.zipporeppogithub.model.ErrorEntity.DBError.*
-import com.example.zipporeppogithub.utils.MutableLiveEvent
 import com.example.zipporeppogithub.model.ResultWrapper
 import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class SearchViewModel
@@ -30,36 +25,9 @@ class SearchViewModel
         const val VISIBLE_THRESHOLD = 5
     }
 
-    private val _isLoading = MutableLiveData(false)
-    val isLoading: LiveData<Boolean>
-        get() = _isLoading
-
-    private val _users = MutableLiveData<List<GithubUserSearchResult.User>>()
-    val users: LiveData<List<GithubUserSearchResult.User>>
-        get() = _users
-
-    private val _additionalUsers = MutableLiveData<List<GithubUserSearchResult.User>>()
-    val additionalUsers: LiveData<List<GithubUserSearchResult.User>>
-        get() = _additionalUsers
-
-    private val _message = MutableLiveData<Int?>()
-    val message: LiveData<Int?>
-        get() = _message
-
-    private val _isError = MutableLiveData(false)
-    val isError: LiveData<Boolean>
-        get() = _isError
-
-    private val _snackMessage = MutableLiveEvent<Int>()
-    val snackMessage: LiveData<Int>
-        get() = _snackMessage
-
-    private val _navigateToUserRepos = MutableLiveEvent<String>()
-    val navigateToUserRepos: LiveData<String>
-        get() = _navigateToUserRepos
-
-    private val _uiState = MutableStateFlow<UserSearchUiState>(UserSearchUiState.UsersSearchNoItemsState)
-    val uiState : StateFlow<UserSearchUiState> = _uiState.asStateFlow()
+    private val reducer = MainReducer(UserSearchUiState.initial())
+    val uiState: StateFlow<UserSearchUiState>
+        get() = reducer.state
 
     private var request: Job? = null
     private var resultsPage: Int = 1
@@ -67,29 +35,26 @@ class SearchViewModel
     private suspend fun searchUsers(query: String): ResultWrapper<GithubUserSearchResult> =
         repository.loadUsersFromNetwork(query, USERS_RESULT_COUNT, resultsPage)
 
-    private suspend fun searchNew(query: String) {
-        _message.postValue(null)
-        _isError.postValue(false)
-        _isLoading.postValue(true)
+    private suspend fun searchNew(
+        query: String
+    ) {
+        reducer.sendEvent(SearchUiEvent.UsersLoading(query))
         when (val answer = searchUsers(query)) {
             is ResultWrapper.Success -> {
                 if (answer.value.resultsCount <= 0) {
-                    _message.postValue(R.string.empty_result_text)
-                    _users.postValue(emptyList())
+                    reducer.sendEvent(SearchUiEvent.NoUsersFound)
                 } else {
-                    _users.postValue(answer.value.usersList)
+                    reducer.sendEvent(SearchUiEvent.NewUsersFound(answer.value.usersList))
                 }
             }
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _message.postValue(errMsg)
-                    _isError.postValue(true)
+                    reducer.sendEvent(SearchUiEvent.SetError(errMsg))
                 }
-                _users.postValue(emptyList())
+//                _users.postValue(emptyList()) todo: а надо ли?
             }
         }
-        _isLoading.postValue(false)
     }
 
     private fun handleError(error: ErrorEntity): Int? {
@@ -109,22 +74,31 @@ class SearchViewModel
         }
     }
 
-    fun listItemClicked(item: GithubUserSearchResult.User) {
-        _navigateToUserRepos.postValue(item.username)
+    fun screenNavigateOut() {
+        reducer.sendEvent(SearchUiEvent.ScreenNavOut)
     }
 
-    fun retryBtnClicked(query: String) {
+    fun listItemClicked(user: GithubUserSearchResult.User) {
+        reducer.sendEvent(SearchUiEvent.NavigateToUserRepos(user.username))
+    }
+
+    fun retryBtnClicked() {
         request = viewModelScope.launch(Dispatchers.IO) {
-            searchNew(query)
+            val prevRequest = uiState.value.prevRequest
+            if (prevRequest.isNotEmpty()) {
+                searchNew(uiState.value.prevRequest) //todo
+            } else {
+                reducer.sendEvent(SearchUiEvent.SetError(R.string.unknown_error_text))
+            }
         }
     }
 
     fun onSearchTextChanged(query: String) {
+        reducer.sendEvent(SearchUiEvent.ClearUsers)
+        if (request?.isActive == true) {
+            request!!.cancel()
+        }
         if (query.isNotEmpty()) {
-            if (request?.isActive == true) {
-                request!!.cancel()
-            }
-            _users.postValue(emptyList())
             resultsPage = 1
             request = viewModelScope.launch(Dispatchers.IO) {
                 //вот вздумалось бахнуть поиск "на лету",
@@ -134,36 +108,71 @@ class SearchViewModel
                 delay(GITHUB_API_DELAY)
                 searchNew(query)
             }
-        } else {
-            _users.postValue(emptyList())
-            _message.postValue(null)
-            _isError.postValue(false)
         }
     }
 
-    //Suppress на _snackMessage.postValue(errMsg) - баг линта.
-    @SuppressLint("NullSafeMutableLiveData")
-    fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int, query: String) {
+    fun onScrolled(lastVisibleItemPosition: Int, itemCount: Int) {
         if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
             if (request?.isActive == true) {
                 return
             }
             resultsPage++
             request = viewModelScope.launch(Dispatchers.IO) {
-                when (val answer = searchUsers(query)) {
-                    is ResultWrapper.Success -> {
-                        if (answer.value.resultsCount <= 0) {
-                            _snackMessage.postValue(R.string.empty_result_text)
-                        } else {
-                            _additionalUsers.postValue(answer.value.usersList)
-                        }
-                    }
-                    is ResultWrapper.Failure -> {
-                        val errMsg = handleError(answer.error)
-                        if (errMsg != null) {
-                            _snackMessage.postValue(errMsg) //когда они это исправят?
-                        }
-                    }
+                searchNew(uiState.value.prevRequest)
+            }
+        }
+    }
+
+    private class MainReducer(initial: UserSearchUiState) {
+
+        private val _state: MutableStateFlow<UserSearchUiState> = MutableStateFlow(initial)
+        val state: StateFlow<UserSearchUiState>
+            get() = _state
+
+        fun setState(newState: UserSearchUiState) {
+            _state.tryEmit(newState)
+        }
+
+        fun sendEvent(event: SearchUiEvent) {
+            reduce(_state.value, event)
+        }
+
+        fun reduce(oldState: UserSearchUiState, event: SearchUiEvent) {
+            when (event) {
+                is SearchUiEvent.NavigateToUserRepos -> {
+                    setState(oldState.copy(reposNav = event.userLogin))
+                }
+                is SearchUiEvent.ScreenNavOut -> {
+                    setState(oldState.copy(reposNav = null))
+                }
+                is SearchUiEvent.ClearUsers -> {
+                    setState(oldState.copy(users = emptyList(), errorMsg = null, prevRequest = ""))
+                }
+                is SearchUiEvent.UsersLoading -> {
+                    setState(
+                        oldState.copy(
+                            isLoading = true,
+                            errorMsg = null,
+                            prevRequest = event.query
+                        )
+                    )
+                }
+                is SearchUiEvent.NewUsersFound -> {
+                    val newUsersList = oldState.users.toMutableList()
+                    newUsersList.addAll(event.users)
+                    setState(
+                        oldState.copy(
+                            users = newUsersList,
+                            errorMsg = null,
+                            isLoading = false
+                        )
+                    )
+                }
+                is SearchUiEvent.NoUsersFound -> {
+                    setState(oldState.copy(isLoading = false)) //todo
+                }
+                is SearchUiEvent.SetError -> {
+                    setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
                 }
             }
         }

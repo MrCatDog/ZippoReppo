@@ -3,21 +3,20 @@ package com.example.zipporeppogithub.ui.search
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.network.GithubUserSearchResult
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun SearchScreen(
@@ -85,27 +84,43 @@ fun SearchField(prevQuery: String, onQueryChange: (String) -> Unit) { //todo pre
 fun SearchedUsersList(
     users: List<GithubUserSearchResult.User>,
     onUserClick: (GithubUserSearchResult.User) -> Unit,
-    onScroll: (Int, Int) -> Unit
+    onScroll: () -> Unit
 ) {
-    val nestedScroll = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                onScroll(consumed.y.toInt(), available.y.toInt())
-                return Offset.Zero
-            }
-        }
-    }
+    val lazyListState: LazyListState = rememberLazyListState()
 
     LazyColumn(
-        modifier = Modifier.nestedScroll(nestedScroll)
+        state = lazyListState
     ) {
         items(users) {
             SearchResultItem(user = it, onUserClick)
         }
+    }
+
+    InfiniteListHandler(lazyListState, onLoadMore = onScroll)
+}
+
+@Composable
+fun InfiniteListHandler(
+    listState: LazyListState,
+    buffer: Int = 5,
+    onLoadMore: () -> Unit
+) {
+    val loadMore = remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsNumber = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+
+            lastVisibleItemIndex > (totalItemsNumber - buffer)
+        }
+    }
+
+    LaunchedEffect(loadMore) {
+        snapshotFlow { loadMore.value }
+            .distinctUntilChanged()
+            .collect {
+                onLoadMore()
+            }
     }
 }
 

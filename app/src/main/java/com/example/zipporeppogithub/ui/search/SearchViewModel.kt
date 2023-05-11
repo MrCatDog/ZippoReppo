@@ -22,7 +22,6 @@ class SearchViewModel
 
     companion object {
         const val GITHUB_API_DELAY: Long = 800
-        const val VISIBLE_THRESHOLD = 5
     }
 
     private val reducer = MainReducer(UserSearchUiState.initial())
@@ -111,15 +110,13 @@ class SearchViewModel
         }
     }
 
-    fun onScrolled(lastVisibleItemPosition: Int, itemCount: Int) {
-        if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
-            if (request?.isActive == true) {
-                return
-            }
-            resultsPage++
-            request = viewModelScope.launch(Dispatchers.IO) {
-                searchNew(uiState.value.prevRequest)
-            }
+    fun onScrolled() {
+        if (request?.isActive == true) {
+            return
+        }
+        resultsPage++
+        request = viewModelScope.launch(Dispatchers.IO) {
+            searchNew(uiState.value.prevRequest)
         }
     }
 

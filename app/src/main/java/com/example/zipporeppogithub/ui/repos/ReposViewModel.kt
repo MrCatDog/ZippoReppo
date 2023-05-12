@@ -1,8 +1,5 @@
 package com.example.zipporeppogithub.ui.repos
 
-import android.annotation.SuppressLint
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
@@ -17,6 +14,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import java.text.SimpleDateFormat
@@ -31,111 +29,90 @@ class ReposViewModel
 ) : ViewModel() {
 
     companion object {
-        const val VISIBLE_THRESHOLD = 5
         const val FILE_EXTENSION = ".zip"
         const val BUFF_SIZE = 4096
     }
 
-    private val _isLoading = MutableLiveData(false)
-    val isLoading: LiveData<Boolean>
-        get() = _isLoading
-
-    private val _reposToShow = MutableLiveData<List<GithubRepo>>()
-    val reposToShow: LiveData<List<GithubRepo>>
-        get() = _reposToShow
-
-    private val _additionalRepos = MutableLiveData<List<GithubRepo>>()
-    val additionalRepos: LiveData<List<GithubRepo>>
-        get() = _additionalRepos
-
-    private val _centerErrMessage = MutableLiveEvent<Int?>()
-    val centerErrMessage: LiveData<Int?>
-        get() = _centerErrMessage
-
-    private val _snackMessage = MutableLiveEvent<Int>()
-    val snackMessage: LiveData<Int>
-        get() = _snackMessage
-
-    private val _isError = MutableLiveData(false)
-    val isError: LiveData<Boolean>
-        get() = _isError
-
-    private val _htmlUrl = MutableLiveEvent<String>()
-    val url: LiveData<String>
-        get() = _htmlUrl
-
-    private val _isPermissionRequested = MutableLiveEvent<Boolean>()
-    val isPermissionRequested: LiveData<Boolean>
-        get() = _isPermissionRequested
+    private val reducer = ReposReducer(ReposState.initial())
+    val uiState: StateFlow<ReposState>
+        get() = reducer.state
 
     private var request: Job? = null
     private var resultsPage: Int = 1
-    private var allDownloaded = false
+    private var isAllDownloaded = false
     private val reposToDownload = ArrayList<String>()
+    private var isAllDownloadRepoWasShown = false
 
     init {
-        viewModelScope.launch(Dispatchers.IO) { searchNew(userLogin) }
+        viewModelScope.launch(Dispatchers.IO) {
+            getRepos(userLogin)
+        }
     }
 
     private suspend fun searchRepos(query: String): ResultWrapper<List<GithubRepo>> =
         repository.loadUserRepos(query, REPOS_RESULT_COUNT, resultsPage)
 
-    private suspend fun searchNew(query: String) {
-        _centerErrMessage.postValue(null)
-        _isError.postValue(false)
-        _isLoading.postValue(true)
+    private suspend fun getRepos(query: String) {
+        reducer.sendEvent(ReposEvent.ReposLoading)
         when (val answer = searchRepos(query)) {
             is ResultWrapper.Success -> {
                 val repos = answer.value
-                _reposToShow.postValue(
-                    repos.ifEmpty {
-                        _centerErrMessage.postValue(R.string.empty_repos_text)
-                        emptyList()
-                    }
-                )
+                if (repos.isNotEmpty()) {
+                    reducer.sendEvent(ReposEvent.NewReposFound(repos))
+                } else {
+                    isAllDownloaded = true
+                    reducer.sendEvent(ReposEvent.NoReposFound)
+                }
             }
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _centerErrMessage.postValue(errMsg)
-                    _isError.postValue(true)
+                    reducer.sendEvent(ReposEvent.SetError(errMsg))
                 }
             }
         }
-        _isLoading.postValue(false)
     }
 
-    fun downloadBtnClicked(item: GithubRepo, pos: Int) {
+    fun linkBtnClicked(item: GithubRepo) {
+        reducer.sendEvent(ReposEvent.NavigateToHtml(item.url))
+    }
+
+    fun downloadBtnClicked(item: GithubRepo) {
         reposToDownload.add(item.name)
-        _isPermissionRequested.postValue(true)
+        if (!uiState.value.isPermissionRequired) {
+            reducer.sendEvent(ReposEvent.PermissionRequested(true))
+        }
     }
 
     fun setPermissionAnswer(answer: Map<String, Boolean>) {
+        reducer.sendEvent(ReposEvent.PermissionRequested(false))
         var isAllGranted = true
         for (isGranted in answer.values) {
             isAllGranted = isAllGranted && isGranted
         }
-        if(isAllGranted) {
+        if (isAllGranted) {
+            //Возможно ConcurrentModificationException, если подобный вызов не блокирует содержимое reposToDownload
+            val localReposToDownload = buildList { addAll(reposToDownload) }
+            reposToDownload.clear()
             viewModelScope.launch(Dispatchers.IO) {
-                reposToDownload.forEach { loadZipRepo(it) }
+                localReposToDownload.forEach { loadZipRepo(it) }
             }
         } else {
             reposToDownload.clear()
-            _snackMessage.postValue(R.string.no_permission_error_text)
+            reducer.sendEvent(ReposEvent.ShowSnack(R.string.no_permission_error_text))
         }
     }
 
     private suspend fun saveDownloadHistoryRecord(repoName: String, dateTime: String) {
         repository.saveDownloadInHistory(
             HistoryRecord(
-                userLogin, repoName,
+                userLogin,
+                repoName,
                 dateTime
             )
         )
     }
 
-    //Suppress на _snackMessage.postValue(errMsg) - баг линта.
-    @SuppressLint("NullSafeMutableLiveData")
     private suspend fun loadZipRepo(repoName: String) {
         when (val answer = repository.loadRepoZip(userLogin, repoName)) {
             is ResultWrapper.Success -> {
@@ -144,7 +121,7 @@ class ReposViewModel
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _snackMessage.postValue(errMsg)
+                    reducer.sendEvent(ReposEvent.SetError(errMsg))
                 }
             }
         }
@@ -154,17 +131,47 @@ class ReposViewModel
         val dateTime: String =
             SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Calendar.getInstance().time)
 
-        //todo всё в worker
         when (val answer = repository.saveFileInExternalStorage(
             body,
             "$path/$repoName-$userLogin-$dateTime$FILE_EXTENSION"
         )) {
             is ResultWrapper.Success -> {
                 saveDownloadHistoryRecord(repoName, dateTime)
-                _snackMessage.postValue(R.string.file_downlod_succes)
+                reducer.sendEvent(ReposEvent.ShowSnack(R.string.file_downlod_succes))
             }
             is ResultWrapper.Failure -> {
-                _snackMessage.postValue(handleError(answer.error))
+                val errMsgResInt = handleError(answer.error)
+                if (errMsgResInt != null) {
+                    reducer.sendEvent(ReposEvent.SetError(errMsgResInt))
+                }
+            }
+        }
+    }
+
+    fun retryBtnClicked() {
+        viewModelScope.launch(Dispatchers.IO) {
+            getRepos(userLogin)
+        }
+    }
+
+    fun screenNavigateOut() {
+        reducer.sendEvent(ReposEvent.ScreenNavigateOut)
+    }
+
+    fun snackShown() {
+        reducer.sendEvent(ReposEvent.SnackWasShown)
+    }
+
+    fun onScrolledToEnd() {
+        if (request?.isActive == true || isAllDownloaded) {
+            if (isAllDownloaded && !isAllDownloadRepoWasShown) {
+                reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
+                isAllDownloadRepoWasShown = true
+            }
+        } else {
+            resultsPage++
+            request = viewModelScope.launch(Dispatchers.IO) {
+                getRepos(userLogin)
             }
         }
     }
@@ -187,46 +194,6 @@ class ReposViewModel
                 ErrorEntity.ExtError.Common -> R.string.file_download_error
             }
             is ErrorEntity.UnknownError -> R.string.unknown_error_text
-        }
-    }
-
-    fun retryBtnClicked() {
-        viewModelScope.launch(Dispatchers.IO) {
-            searchNew(userLogin)
-        }
-    }
-
-    fun linkBtnClicked(item: GithubRepo) {
-        _htmlUrl.postValue(item.url)
-    }
-
-    //Suppress на _additionalRepos.postValue(answer.value)
-    //и _snackMessage.postValue(errMsg) - баг линта.
-    @SuppressLint("NullSafeMutableLiveData")
-    fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int) {
-        if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
-            if (request?.isActive == true || allDownloaded) {
-                return
-            }
-            resultsPage++
-            request = viewModelScope.launch(Dispatchers.IO) {
-                when (val answer = searchRepos(userLogin)) {
-                    is ResultWrapper.Success -> {
-                        if (answer.value.isEmpty()) {
-                            _snackMessage.postValue(R.string.all_repos_download_text)
-                            allDownloaded = true
-                        } else {
-                            _additionalRepos.postValue(answer.value)
-                        }
-                    }
-                    is ResultWrapper.Failure -> {
-                        val errMsg = handleError(answer.error)
-                        if (errMsg != null) {
-                            _snackMessage.postValue(errMsg)
-                        }
-                    }
-                }
-            }
         }
     }
 }

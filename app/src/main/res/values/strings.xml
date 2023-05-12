@@ -10,6 +10,7 @@
     <string name="service_unavailable_error_text">Server error! Try again later.</string>
     <string name="no_permission_error_text">App need permission to work with storage</string>
     <string name="common_db_error_text">Data Base error, please, contact with developer</string>
+
     <string name="search_hint">Search user</string>
     <string name="repo_open_in_browser_btn_text">Open</string>
     <string name="repo_download_content_desc">Download button</string>
@@ -20,4 +21,6 @@
     <string name="empty_repos_text">Public repository not found!</string>
     <string name="all_repos_download_text">All repos downloaded</string>
     <string name="file_downlod_succes">Zip downloaded!</string>
+
+    <string name="search_input_invite">Who are we searching?</string>
 </resources>

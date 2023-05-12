@@ -8,7 +8,7 @@ data class SearchState(
     val users: List<GithubUserSearchResult.User>,
     val errorMsg: Int?,
     val prevRequest: String,
-    val isLastAnswerEmpty : Boolean
+    val isLastAnswerEmpty: Boolean
 ) {
     companion object {
         fun initial() = SearchState(

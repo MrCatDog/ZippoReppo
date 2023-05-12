@@ -66,6 +66,9 @@ fun ReposScreen(
                 viewModel::onScrolledToEnd
             )
         }
+        state.isLastAnswerWasEmpty -> {
+            NothingFoundMsg()
+        }
         state.isLoading -> {
             CircularLoadingIndicator()
         }
@@ -185,5 +188,12 @@ fun RepoItem(
                 )
             )
         }
+    }
+}
+
+@Composable
+fun NothingFoundMsg() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = stringResource(id = R.string.empty_repos_text))
     }
 }

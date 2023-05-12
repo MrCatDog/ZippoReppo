@@ -7,7 +7,8 @@ data class ReposState(
     val repos: List<GithubRepo>,
     val errorMsg: Int?,
     val htmlLink: String?,
-    val isPermissionRequired: Boolean
+    val isPermissionRequired: Boolean,
+    val isLastAnswerWasEmpty: Boolean
 ) {
     companion object {
         fun initial() = ReposState(
@@ -15,7 +16,8 @@ data class ReposState(
             repos = emptyList(),
             errorMsg = null,
             htmlLink = null,
-            isPermissionRequired = false
+            isPermissionRequired = false,
+            isLastAnswerWasEmpty = false
         )
     }
 }

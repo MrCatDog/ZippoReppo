@@ -52,7 +52,8 @@ class ReposReducer(initial: ReposState) {
                 )
             }
             is ReposEvent.NoReposFound -> {
-                //todo
+
+                setState(oldState.copy(isLastAnswerWasEmpty = true, isLoading = false))
             }
             is ReposEvent.SetError -> {
                 setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))

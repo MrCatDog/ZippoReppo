@@ -28,20 +28,21 @@ fun HomeScreen(navController: NavHostController) {
     ) {
         NavHost(
             navController,
-            route = Screen.Home.navRoute,
             startDestination = BottomNavItem.Search.navDestination,
             modifier = Modifier.padding(it)
         ) {
-            composable(BottomNavItem.History.navDestination) {
-                val context = LocalContext.current
-                val viewModel: HistoryViewModel = daggerViewModel {
-                    DaggerAppComponent.builder().applicationContext(context).build()
-                        .provideHistoryViewModel()
-                }
-                HistoryScreen(viewModel)
-            }
+//            composable(BottomNavItem.History.navDestination) {
+//                val context = LocalContext.current
+//                val viewModel: HistoryViewModel = daggerViewModel {
+//                    DaggerAppComponent.builder().applicationContext(context).build()
+//                        .provideHistoryViewModel()
+//                }
+//                HistoryScreen(viewModel)
+//            }
 
             addDownloadsNavGraph(navController)
+
+            addHistoryNavGraph()
         }
     }
 }
@@ -58,7 +59,7 @@ fun NavGraphBuilder.addDownloadsNavGraph(navController: NavHostController) {
                     .provideSearchViewModel()
             }
             SearchScreen(viewModel) { userLogin ->
-                navController.navigate(Screen.Repos.navRoute + "/" + userLogin)//todo args
+                navController.navigate("${Screen.Repos.navRoute}/$userLogin")
             }
         }
 
@@ -74,6 +75,22 @@ fun NavGraphBuilder.addDownloadsNavGraph(navController: NavHostController) {
                     )
             }
             ReposScreen(viewModel = viewModel)
+        }
+    }
+}
+
+fun NavGraphBuilder.addHistoryNavGraph() {
+    navigation(
+        route = Screen.NestedGraphHistory.navRoute,
+        startDestination = Screen.History.navRoute
+    ) {
+        composable(Screen.History.navRoute) {
+            val context = LocalContext.current
+            val viewModel: HistoryViewModel = daggerViewModel {
+                DaggerAppComponent.builder().applicationContext(context).build()
+                    .provideHistoryViewModel()
+            }
+            HistoryScreen(viewModel)
         }
     }
 }

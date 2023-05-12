@@ -39,6 +39,7 @@ fun MainScreenBottomNavigation(navController: NavController) {
                     navController.navigate(item.navDestination) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
+                            inclusive = true
                         }
                         launchSingleTop = true
                         restoreState = true

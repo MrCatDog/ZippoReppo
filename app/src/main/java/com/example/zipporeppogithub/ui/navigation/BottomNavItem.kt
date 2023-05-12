@@ -7,5 +7,5 @@ sealed class BottomNavItem(val title: String, val icon: Int, val navDestination:
         BottomNavItem("Search", R.drawable.bottom_nav_search, Screen.NestedGraphRepos.navRoute)
 
     object History :
-        BottomNavItem("History", R.drawable.bottom_nav_download, Screen.History.navRoute)
+        BottomNavItem("History", R.drawable.bottom_nav_download, Screen.NestedGraphHistory.navRoute)
 }

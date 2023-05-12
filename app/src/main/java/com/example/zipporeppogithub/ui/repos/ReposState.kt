@@ -8,7 +8,8 @@ data class ReposState(
     val errorMsg: Int?,
     val htmlLink: String?,
     val isPermissionRequired: Boolean,
-    val isLastAnswerWasEmpty: Boolean
+    val isLastAnswerWasEmpty: Boolean,
+    val snackMsgResId: Int?
 ) {
     companion object {
         fun initial() = ReposState(
@@ -17,7 +18,8 @@ data class ReposState(
             errorMsg = null,
             htmlLink = null,
             isPermissionRequired = false,
-            isLastAnswerWasEmpty = false
+            isLastAnswerWasEmpty = false,
+            snackMsgResId = null
         )
     }
 }

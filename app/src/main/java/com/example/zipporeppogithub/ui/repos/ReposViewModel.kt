@@ -41,6 +41,7 @@ class ReposViewModel
     private var resultsPage: Int = 1
     private var isAllDownloaded = false
     private val reposToDownload = ArrayList<String>()
+    private var isAllDownloadRepoWasShown = false
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -157,9 +158,16 @@ class ReposViewModel
         reducer.sendEvent(ReposEvent.ScreenNavigateOut)
     }
 
+    fun snackShown() {
+        reducer.sendEvent(ReposEvent.SnackWasShown)
+    }
+
     fun onScrolledToEnd() {
         if (request?.isActive == true || isAllDownloaded) {
-            reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
+            if (isAllDownloaded && !isAllDownloadRepoWasShown) {
+                reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
+                isAllDownloadRepoWasShown = true
+            }
         } else {
             resultsPage++
             request = viewModelScope.launch(Dispatchers.IO) {

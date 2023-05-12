@@ -8,10 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +25,7 @@ import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemData
 import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemDataProvider
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 private val PERMISSIONS_REQUIRED = arrayOf(
     Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -44,6 +42,8 @@ fun ReposScreen(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { isGranted -> viewModel.setPermissionAnswer(isGranted) }
     val uriHandler = LocalUriHandler.current
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
 
     if (state.htmlLink != null) {
         LaunchedEffect(Unit) {
@@ -57,23 +57,47 @@ fun ReposScreen(
         }
     }
 
-    when {
-        state.repos.isNotEmpty() -> {
-            ReposList(
-                state.repos,
-                viewModel::downloadBtnClicked,
-                viewModel::linkBtnClicked,
-                viewModel::onScrolledToEnd
-            )
-        }
-        state.isLastAnswerWasEmpty -> {
-            NothingFoundMsg()
-        }
-        state.isLoading -> {
-            CircularLoadingIndicator()
-        }
-        state.errorMsg != null -> {
-            ErrorView(errMsgResId = state.errorMsg!!, viewModel::retryBtnClicked) //todo !!
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        scaffoldState = scaffoldState
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(it)
+        ) {
+            val snackMsgRes = state.snackMsgResId
+            if (snackMsgRes != null) {
+                val snackMsg = stringResource(id = snackMsgRes)
+                LaunchedEffect(Unit) {
+                    coroutineScope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = snackMsg)
+                    }
+                    viewModel.snackShown()
+                }
+            }
+
+            when {
+                state.repos.isNotEmpty() -> {
+                    ReposList(
+                        state.repos,
+                        viewModel::downloadBtnClicked,
+                        viewModel::linkBtnClicked,
+                        viewModel::onScrolledToEnd
+                    )
+                }
+                state.isLastAnswerWasEmpty -> {
+                    NothingFoundMsg()
+                }
+                state.isLoading -> {
+                    CircularLoadingIndicator()
+                }
+                state.errorMsg != null -> {
+                    ErrorView(
+                        errMsgResId = state.errorMsg!!,
+                        viewModel::retryBtnClicked
+                    )
+                }
+            }
         }
     }
 }

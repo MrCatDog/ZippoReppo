@@ -14,4 +14,5 @@ sealed class ReposEvent {
     object ScreenNavigateOut : ReposEvent()
 
     data class ShowSnack(val msgResId: Int) : ReposEvent()
+    object SnackWasShown : ReposEvent()
 }

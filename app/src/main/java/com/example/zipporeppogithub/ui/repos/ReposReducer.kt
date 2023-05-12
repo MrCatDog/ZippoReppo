@@ -59,7 +59,10 @@ class ReposReducer(initial: ReposState) {
                 setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
             }
             is ReposEvent.ShowSnack -> {
-                //todo
+                setState(oldState.copy(snackMsgResId = event.msgResId))
+            }
+            is ReposEvent.SnackWasShown -> {
+                setState(oldState.copy(snackMsgResId = null))
             }
         }
     }

@@ -31,11 +31,9 @@ class HistoryReducer(initial: HistoryState) {
                 setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
             }
             is HistoryEvent.RecordsFound -> {
-                val newReposList = oldState.historyRecords.toMutableList()
-                newReposList.addAll(event.repos)
                 setState(
                     oldState.copy(
-                        historyRecords = newReposList,
+                        historyRecords = event.repos,
                         errorMsg = null,
                         isLoading = false
                     )

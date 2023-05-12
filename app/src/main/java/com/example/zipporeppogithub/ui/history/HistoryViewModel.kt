@@ -20,9 +20,9 @@ class HistoryViewModel
     val uiState: StateFlow<HistoryState>
         get() = reducer.state
 
-    init {
-        getHistory()
-    }
+//    init {
+//        getHistory()
+//    }
 
     private suspend fun requestHistory() {
         reducer.sendEvent(HistoryEvent.ReposLoading)

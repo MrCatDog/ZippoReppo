@@ -29,7 +29,6 @@ class ReposViewModel
 ) : ViewModel() {
 
     companion object {
-        const val VISIBLE_THRESHOLD = 5
         const val FILE_EXTENSION = ".zip"
         const val BUFF_SIZE = 4096
     }
@@ -40,17 +39,19 @@ class ReposViewModel
 
     private var request: Job? = null
     private var resultsPage: Int = 1
-    private var allDownloaded = false
+    private var isAllDownloaded = false
     private val reposToDownload = ArrayList<String>()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) { searchNew(userLogin) }
+        viewModelScope.launch(Dispatchers.IO) {
+            getRepos(userLogin)
+        }
     }
 
     private suspend fun searchRepos(query: String): ResultWrapper<List<GithubRepo>> =
         repository.loadUserRepos(query, REPOS_RESULT_COUNT, resultsPage)
 
-    private suspend fun searchNew(query: String) {
+    private suspend fun getRepos(query: String) {
         reducer.sendEvent(ReposEvent.ReposLoading)
         when (val answer = searchRepos(query)) {
             is ResultWrapper.Success -> {
@@ -58,6 +59,7 @@ class ReposViewModel
                 if (repos.isNotEmpty()) {
                     reducer.sendEvent(ReposEvent.NewReposFound(repos))
                 } else {
+                    isAllDownloaded = true
                     reducer.sendEvent(ReposEvent.NoReposFound)
                 }
             }
@@ -168,7 +170,7 @@ class ReposViewModel
 
     fun retryBtnClicked() {
         viewModelScope.launch(Dispatchers.IO) {
-            searchNew(userLogin)
+            getRepos(userLogin)
         }
     }
 
@@ -176,29 +178,13 @@ class ReposViewModel
         reducer.sendEvent(ReposEvent.ScreenNavigateOut)
     }
 
-    fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int) {
-        if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
-            if (request?.isActive == true || allDownloaded) {
-                return
-            }
+    fun onScrolledToEnd() {
+        if (request?.isActive == true || isAllDownloaded) {
+            reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
+        } else {
             resultsPage++
             request = viewModelScope.launch(Dispatchers.IO) {
-                when (val answer = searchRepos(userLogin)) {
-                    is ResultWrapper.Success -> {
-                        if (answer.value.isEmpty()) {
-                            reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
-                            allDownloaded = true
-                        } else {
-                            reducer.sendEvent(ReposEvent.NewReposFound(answer.value))
-                        }
-                    }
-                    is ResultWrapper.Failure -> {
-                        val errMsg = handleError(answer.error)
-                        if (errMsg != null) {
-                            reducer.sendEvent(ReposEvent.SetError(errMsg))
-                        }
-                    }
-                }
+                getRepos(userLogin)
             }
         }
     }

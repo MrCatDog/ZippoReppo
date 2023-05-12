@@ -5,7 +5,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
@@ -25,11 +27,13 @@ import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemData
 import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemDataProvider
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val PERMISSIONS_REQUIRED = arrayOf(
     Manifest.permission.READ_EXTERNAL_STORAGE,
     Manifest.permission.WRITE_EXTERNAL_STORAGE
 )
+private const val VISIBLE_THRESHOLD = 5
 
 @Composable
 fun ReposScreen(
@@ -41,23 +45,25 @@ fun ReposScreen(
     ) { isGranted -> viewModel.setPermissionAnswer(isGranted) }
     val uriHandler = LocalUriHandler.current
 
+    if (state.htmlLink != null) {
+        LaunchedEffect(Unit) {
+            uriHandler.openUri(state.htmlLink!!)
+            viewModel.screenNavigateOut()
+        }
+    }
+    if (state.isPermissionRequired) {
+        LaunchedEffect(Unit) {
+            askForPermission.launch(PERMISSIONS_REQUIRED)
+        }
+    }
+
     when {
-        state.htmlLink != null -> {
-            LaunchedEffect(Unit) {
-                uriHandler.openUri(state.htmlLink!!)
-                viewModel.screenNavigateOut()
-            }
-        }
-        state.isPermissionRequired -> {
-            LaunchedEffect(Unit) {
-                askForPermission.launch(PERMISSIONS_REQUIRED)
-            }
-        }
         state.repos.isNotEmpty() -> {
             ReposList(
                 state.repos,
                 viewModel::downloadBtnClicked,
-                viewModel::linkBtnClicked
+                viewModel::linkBtnClicked,
+                viewModel::onScrolledToEnd
             )
         }
         state.isLoading -> {
@@ -92,10 +98,16 @@ fun ErrorView(errMsgResId: Int, onRetryBtnClick: () -> Unit) {
 fun ReposList(
     repos: List<GithubRepo>,
     onDownloadClick: (GithubRepo) -> Unit,
-    onLinkClick: (GithubRepo) -> Unit
+    onLinkClick: (GithubRepo) -> Unit,
+    onScroll: () -> Unit
 ) {
+    val lazyListState: LazyListState = rememberLazyListState()
+
+    InfiniteListHandler(lazyListState, onLoadMore = onScroll)
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        state = lazyListState
     ) {
         items(repos) {
             RepoItem(
@@ -109,10 +121,35 @@ fun ReposList(
     }
 }
 
+@Composable
+fun InfiniteListHandler(
+    listState: LazyListState,
+    buffer: Int = VISIBLE_THRESHOLD,
+    onLoadMore: () -> Unit
+) {
+    val loadMore = remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsNumber = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+
+            lastVisibleItemIndex > (totalItemsNumber - buffer)
+        }
+    }
+
+    LaunchedEffect(loadMore) {
+        snapshotFlow { loadMore.value }
+            .distinctUntilChanged()
+            .collect {
+                onLoadMore()
+            }
+    }
+}
+
 @Preview
 @Composable
 fun RepoItem(
-    @PreviewParameter(RepoItemDataProvider::class) buildData: RepoItemData,
+    @PreviewParameter(RepoItemDataProvider::class) buildData: RepoItemData
 //    repo: GithubRepo,
 //    downloadBtnCallback: (GithubRepo) -> Unit,
 //    linkBtnCallback: (GithubRepo) -> Unit

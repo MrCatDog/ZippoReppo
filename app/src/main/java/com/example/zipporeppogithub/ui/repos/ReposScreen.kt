@@ -1,7 +1,6 @@
 package com.example.zipporeppogithub.ui.repos
 
 import android.Manifest
-import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -14,7 +13,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -23,7 +21,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.network.GithubRepo
 import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemData
@@ -39,19 +36,22 @@ fun ReposScreen(
     viewModel: ReposViewModel
 ) {
     val state by viewModel.uiState.collectAsState()
-
     val askForPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { isGranted -> viewModel.setPermissionAnswer(isGranted) }
+    val uriHandler = LocalUriHandler.current
 
     when {
         state.htmlLink != null -> {
-            val uriHandler = LocalUriHandler.current
-            uriHandler.openUri(state.htmlLink!!)
-            viewModel.screenNavigateOut() //todo мигает так себе
+            LaunchedEffect(Unit) {
+                uriHandler.openUri(state.htmlLink!!)
+                viewModel.screenNavigateOut()
+            }
         }
         state.isPermissionRequired -> {
-            askForPermission.launch(PERMISSIONS_REQUIRED)
+            LaunchedEffect(Unit) {
+                askForPermission.launch(PERMISSIONS_REQUIRED)
+            }
         }
         state.repos.isNotEmpty() -> {
             ReposList(

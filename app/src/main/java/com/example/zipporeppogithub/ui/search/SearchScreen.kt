@@ -47,6 +47,10 @@ fun SearchScreen(
             )
         }
 
+        if(state.isLastAnswerEmpty) {
+            NothingFoundMsg()
+        }
+
         if (state.isLoading) {
             CircularLoadingIndicator()
         }

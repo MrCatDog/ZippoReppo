@@ -42,10 +42,7 @@ class HistoryReducer(initial: HistoryState) {
             is HistoryEvent.RecordsEmpty -> {
                 setState(
                     oldState.copy(
-                        historyRecords = emptyList(),
-                        errorMsg = null,
-                        isLoading = false,
-                        isEmpty = true
+                        isEmpty = true, isLoading = false
                     )
                 )
             }

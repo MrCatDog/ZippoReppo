@@ -20,10 +20,6 @@ class HistoryViewModel
     val uiState: StateFlow<HistoryState>
         get() = reducer.state
 
-//    init {
-//        getHistory()
-//    }
-
     private suspend fun requestHistory() {
         reducer.sendEvent(HistoryEvent.ReposLoading)
         when (val answer = repository.getDownloadHistory()) {
@@ -41,6 +37,10 @@ class HistoryViewModel
         }
     }
 
+    fun getHistory() {
+        viewModelScope.launch(Dispatchers.IO) { requestHistory() }
+    }
+
     private fun handleError(error: ErrorEntity): Int {
         return if (error is ErrorEntity.DBError) {
             when (error) {
@@ -51,9 +51,4 @@ class HistoryViewModel
             R.string.unknown_error_text
         }
     }
-
-    fun getHistory() {
-        viewModelScope.launch(Dispatchers.IO) { requestHistory() }
-    }
-
 }

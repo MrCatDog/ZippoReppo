@@ -33,7 +33,7 @@ class SearchViewModel
     private suspend fun searchUsers(query: String): ResultWrapper<GithubUserSearchResult> =
         repository.loadUsersFromNetwork(query, USERS_RESULT_COUNT, resultsPage)
 
-    private suspend fun searchNew(
+    private suspend fun getUsers(
         query: String
     ) {
         reducer.sendEvent(SearchEvent.UsersLoading(query))
@@ -54,23 +54,6 @@ class SearchViewModel
         }
     }
 
-    private fun handleError(error: ErrorEntity): Int? {
-        return when (error) {
-            is ErrorEntity.ApiError -> when (error) {
-                Network -> R.string.network_error_text
-                NotFound -> R.string.not_found_error_text
-                AccessDenied -> R.string.access_denied_error_text
-                ServiceUnavailable -> R.string.service_unavailable_error_text
-            }
-            is ErrorEntity.DBError -> when (error) {
-                NoPermission -> R.string.no_permission_error_text
-                Common -> R.string.common_db_error_text
-            }
-            is ErrorEntity.Cancel -> null
-            else -> R.string.unknown_error_text
-        }
-    }
-
     fun screenNavigateOut() {
         reducer.sendEvent(SearchEvent.ScreenNavOut)
     }
@@ -83,9 +66,9 @@ class SearchViewModel
         request = viewModelScope.launch(Dispatchers.IO) {
             val prevRequest = uiState.value.prevRequest
             if (prevRequest.isNotEmpty()) {
-                searchNew(uiState.value.prevRequest) //todo
+                getUsers(uiState.value.prevRequest) //todo
             } else {
-                reducer.sendEvent(SearchEvent.SetError(R.string.unknown_error_text))
+                reducer.sendEvent(SearchEvent.ClearUsers)
             }
         }
     }
@@ -103,7 +86,7 @@ class SearchViewModel
                 // так шо лишний раз его не дёргаем, даём задержку
                 //https://docs.github.com/en/rest/search?apiVersion=2022-11-28#rate-limit
                 delay(GITHUB_API_DELAY)
-                searchNew(query)
+                getUsers(query)
             }
         }
     }
@@ -114,7 +97,24 @@ class SearchViewModel
         }
         resultsPage++
         request = viewModelScope.launch(Dispatchers.IO) {
-            searchNew(uiState.value.prevRequest)
+            getUsers(uiState.value.prevRequest)
+        }
+    }
+
+    private fun handleError(error: ErrorEntity): Int? {
+        return when (error) {
+            is ErrorEntity.ApiError -> when (error) {
+                Network -> R.string.network_error_text
+                NotFound -> R.string.not_found_error_text
+                AccessDenied -> R.string.access_denied_error_text
+                ServiceUnavailable -> R.string.service_unavailable_error_text
+            }
+            is ErrorEntity.DBError -> when (error) {
+                NoPermission -> R.string.no_permission_error_text
+                Common -> R.string.common_db_error_text
+            }
+            is ErrorEntity.Cancel -> null
+            else -> R.string.unknown_error_text
         }
     }
 }

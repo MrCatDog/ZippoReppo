@@ -27,7 +27,14 @@ class SearchReducer(initial: SearchState) {
                 setState(oldState.copy(reposNav = null))
             }
             is SearchEvent.ClearUsers -> {
-                setState(oldState.copy(users = emptyList(), errorMsg = null, prevRequest = ""))
+                setState(
+                    oldState.copy(
+                        users = emptyList(),
+                        errorMsg = null,
+                        prevRequest = "",
+                        isLastAnswerEmpty = false
+                    )
+                )
             }
             is SearchEvent.UsersLoading -> {
                 setState(
@@ -50,7 +57,13 @@ class SearchReducer(initial: SearchState) {
                 )
             }
             is SearchEvent.NoUsersFound -> {
-                setState(oldState.copy(isLoading = false, )) //todo
+                setState(
+                    oldState.copy(
+                        isLoading = false,
+                        isLastAnswerEmpty = true,
+                        errorMsg = null
+                    )
+                )
             }
             is SearchEvent.SetError -> {
                 setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))

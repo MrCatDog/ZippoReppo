@@ -147,27 +147,6 @@ class ReposViewModel
         }
     }
 
-    private fun handleError(error: ErrorEntity): Int? {
-        return when (error) {
-            is ErrorEntity.ApiError -> when (error) {
-                ErrorEntity.ApiError.Network -> R.string.network_error_text
-                ErrorEntity.ApiError.NotFound -> R.string.not_found_error_text
-                ErrorEntity.ApiError.AccessDenied -> R.string.access_denied_error_text
-                ErrorEntity.ApiError.ServiceUnavailable -> R.string.service_unavailable_error_text
-            }
-            is ErrorEntity.DBError -> when (error) {
-                ErrorEntity.DBError.NoPermission -> R.string.no_permission_error_text
-                ErrorEntity.DBError.Common -> R.string.common_db_error_text
-            }
-            is ErrorEntity.Cancel -> null
-            is ErrorEntity.ExtError -> when (error) {
-                ErrorEntity.ExtError.Permission -> R.string.no_permission_error_text
-                ErrorEntity.ExtError.Common -> R.string.file_download_error
-            }
-            is ErrorEntity.UnknownError -> R.string.unknown_error_text
-        }
-    }
-
     fun retryBtnClicked() {
         viewModelScope.launch(Dispatchers.IO) {
             getRepos(userLogin)
@@ -186,6 +165,27 @@ class ReposViewModel
             request = viewModelScope.launch(Dispatchers.IO) {
                 getRepos(userLogin)
             }
+        }
+    }
+
+    private fun handleError(error: ErrorEntity): Int? {
+        return when (error) {
+            is ErrorEntity.ApiError -> when (error) {
+                ErrorEntity.ApiError.Network -> R.string.network_error_text
+                ErrorEntity.ApiError.NotFound -> R.string.not_found_error_text
+                ErrorEntity.ApiError.AccessDenied -> R.string.access_denied_error_text
+                ErrorEntity.ApiError.ServiceUnavailable -> R.string.service_unavailable_error_text
+            }
+            is ErrorEntity.DBError -> when (error) {
+                ErrorEntity.DBError.NoPermission -> R.string.no_permission_error_text
+                ErrorEntity.DBError.Common -> R.string.common_db_error_text
+            }
+            is ErrorEntity.Cancel -> null
+            is ErrorEntity.ExtError -> when (error) {
+                ErrorEntity.ExtError.Permission -> R.string.no_permission_error_text
+                ErrorEntity.ExtError.Common -> R.string.file_download_error
+            }
+            is ErrorEntity.UnknownError -> R.string.unknown_error_text
         }
     }
 }

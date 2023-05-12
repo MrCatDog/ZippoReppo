@@ -7,7 +7,8 @@ data class SearchState(
     val isLoading: Boolean,
     val users: List<GithubUserSearchResult.User>,
     val errorMsg: Int?,
-    val prevRequest: String
+    val prevRequest: String,
+    val isLastAnswerEmpty : Boolean
 ) {
     companion object {
         fun initial() = SearchState(
@@ -15,7 +16,8 @@ data class SearchState(
             prevRequest = "",
             users = emptyList(),
             errorMsg = null,
-            reposNav = null
+            reposNav = null,
+            isLastAnswerEmpty = false
         )
     }
 }

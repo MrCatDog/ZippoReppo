@@ -24,8 +24,8 @@ class SearchViewModel
         const val GITHUB_API_DELAY: Long = 800
     }
 
-    private val reducer = MainReducer(UserSearchUiState.initial())
-    val uiState: StateFlow<UserSearchUiState>
+    private val reducer = SearchReducer(SearchState.initial())
+    val uiState: StateFlow<SearchState>
         get() = reducer.state
 
     private var request: Job? = null
@@ -37,21 +37,20 @@ class SearchViewModel
     private suspend fun searchNew(
         query: String
     ) {
-        reducer.sendEvent(SearchUiEvent.UsersLoading(query))
+        reducer.sendEvent(SearchEvent.UsersLoading(query))
         when (val answer = searchUsers(query)) {
             is ResultWrapper.Success -> {
                 if (answer.value.resultsCount <= 0) {
-                    reducer.sendEvent(SearchUiEvent.NoUsersFound)
+                    reducer.sendEvent(SearchEvent.NoUsersFound)
                 } else {
-                    reducer.sendEvent(SearchUiEvent.NewUsersFound(answer.value.usersList))
+                    reducer.sendEvent(SearchEvent.NewUsersFound(answer.value.usersList))
                 }
             }
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    reducer.sendEvent(SearchUiEvent.SetError(errMsg))
+                    reducer.sendEvent(SearchEvent.SetError(errMsg))
                 }
-//                _users.postValue(emptyList()) todo: а надо ли?
             }
         }
     }
@@ -74,11 +73,11 @@ class SearchViewModel
     }
 
     fun screenNavigateOut() {
-        reducer.sendEvent(SearchUiEvent.ScreenNavOut)
+        reducer.sendEvent(SearchEvent.ScreenNavOut)
     }
 
     fun listItemClicked(user: GithubUserSearchResult.User) {
-        reducer.sendEvent(SearchUiEvent.NavigateToUserRepos(user.username))
+        reducer.sendEvent(SearchEvent.NavigateToUserRepos(user.username))
     }
 
     fun retryBtnClicked() {
@@ -87,13 +86,13 @@ class SearchViewModel
             if (prevRequest.isNotEmpty()) {
                 searchNew(uiState.value.prevRequest) //todo
             } else {
-                reducer.sendEvent(SearchUiEvent.SetError(R.string.unknown_error_text))
+                reducer.sendEvent(SearchEvent.SetError(R.string.unknown_error_text))
             }
         }
     }
 
     fun onSearchTextChanged(query: String) {
-        reducer.sendEvent(SearchUiEvent.ClearUsers)
+        reducer.sendEvent(SearchEvent.ClearUsers)
         if (request?.isActive == true) {
             request!!.cancel()
         }
@@ -120,32 +119,32 @@ class SearchViewModel
         }
     }
 
-    private class MainReducer(initial: UserSearchUiState) {
+    private class SearchReducer(initial: SearchState) {
 
-        private val _state: MutableStateFlow<UserSearchUiState> = MutableStateFlow(initial)
-        val state: StateFlow<UserSearchUiState>
+        private val _state: MutableStateFlow<SearchState> = MutableStateFlow(initial)
+        val state: StateFlow<SearchState>
             get() = _state
 
-        fun setState(newState: UserSearchUiState) {
+        fun setState(newState: SearchState) {
             _state.tryEmit(newState)
         }
 
-        fun sendEvent(event: SearchUiEvent) {
+        fun sendEvent(event: SearchEvent) {
             reduce(_state.value, event)
         }
 
-        fun reduce(oldState: UserSearchUiState, event: SearchUiEvent) {
+        fun reduce(oldState: SearchState, event: SearchEvent) {
             when (event) {
-                is SearchUiEvent.NavigateToUserRepos -> {
+                is SearchEvent.NavigateToUserRepos -> {
                     setState(oldState.copy(reposNav = event.userLogin))
                 }
-                is SearchUiEvent.ScreenNavOut -> {
+                is SearchEvent.ScreenNavOut -> {
                     setState(oldState.copy(reposNav = null))
                 }
-                is SearchUiEvent.ClearUsers -> {
+                is SearchEvent.ClearUsers -> {
                     setState(oldState.copy(users = emptyList(), errorMsg = null, prevRequest = ""))
                 }
-                is SearchUiEvent.UsersLoading -> {
+                is SearchEvent.UsersLoading -> {
                     setState(
                         oldState.copy(
                             isLoading = true,
@@ -154,7 +153,7 @@ class SearchViewModel
                         )
                     )
                 }
-                is SearchUiEvent.NewUsersFound -> {
+                is SearchEvent.NewUsersFound -> {
                     val newUsersList = oldState.users.toMutableList()
                     newUsersList.addAll(event.users)
                     setState(
@@ -165,10 +164,10 @@ class SearchViewModel
                         )
                     )
                 }
-                is SearchUiEvent.NoUsersFound -> {
-                    setState(oldState.copy(isLoading = false)) //todo
+                is SearchEvent.NoUsersFound -> {
+                    setState(oldState.copy(isLoading = false, )) //todo
                 }
-                is SearchUiEvent.SetError -> {
+                is SearchEvent.SetError -> {
                     setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
                 }
             }

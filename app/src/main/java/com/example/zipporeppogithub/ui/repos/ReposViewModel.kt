@@ -1,8 +1,5 @@
 package com.example.zipporeppogithub.ui.repos
 
-import android.annotation.SuppressLint
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zipporeppogithub.R
@@ -17,6 +14,8 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import java.text.SimpleDateFormat
@@ -36,37 +35,9 @@ class ReposViewModel
         const val BUFF_SIZE = 4096
     }
 
-    private val _isLoading = MutableLiveData(false)
-    val isLoading: LiveData<Boolean>
-        get() = _isLoading
-
-    private val _reposToShow = MutableLiveData<List<GithubRepo>>()
-    val reposToShow: LiveData<List<GithubRepo>>
-        get() = _reposToShow
-
-    private val _additionalRepos = MutableLiveData<List<GithubRepo>>()
-    val additionalRepos: LiveData<List<GithubRepo>>
-        get() = _additionalRepos
-
-    private val _centerErrMessage = MutableLiveEvent<Int?>()
-    val centerErrMessage: LiveData<Int?>
-        get() = _centerErrMessage
-
-    private val _snackMessage = MutableLiveEvent<Int>()
-    val snackMessage: LiveData<Int>
-        get() = _snackMessage
-
-    private val _isError = MutableLiveData(false)
-    val isError: LiveData<Boolean>
-        get() = _isError
-
-    private val _htmlUrl = MutableLiveEvent<String>()
-    val url: LiveData<String>
-        get() = _htmlUrl
-
-    private val _isPermissionRequested = MutableLiveEvent<Boolean>()
-    val isPermissionRequested: LiveData<Boolean>
-        get() = _isPermissionRequested
+    private val reducer = ReposReducer(ReposState.initial())
+    val uiState: StateFlow<ReposState>
+        get() = reducer.state
 
     private var request: Job? = null
     private var resultsPage: Int = 1
@@ -81,61 +52,62 @@ class ReposViewModel
         repository.loadUserRepos(query, REPOS_RESULT_COUNT, resultsPage)
 
     private suspend fun searchNew(query: String) {
-        _centerErrMessage.postValue(null)
-        _isError.postValue(false)
-        _isLoading.postValue(true)
+        reducer.sendEvent(ReposEvent.ReposLoading)
         when (val answer = searchRepos(query)) {
             is ResultWrapper.Success -> {
                 val repos = answer.value
-                _reposToShow.postValue(
-                    repos.ifEmpty {
-                        _centerErrMessage.postValue(R.string.empty_repos_text)
-                        emptyList()
-                    }
-                )
+                if (repos.isNotEmpty()) {
+                    reducer.sendEvent(ReposEvent.NewReposFound(repos))
+                } else {
+                    reducer.sendEvent(ReposEvent.NoReposFound)
+                }
             }
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _centerErrMessage.postValue(errMsg)
-                    _isError.postValue(true)
+                    reducer.sendEvent(ReposEvent.SetError(errMsg))
                 }
             }
         }
-        _isLoading.postValue(false)
+    }
+
+    fun linkBtnClicked(item: GithubRepo) {
+        reducer.sendEvent(ReposEvent.NavigateToHtml(item.url))
     }
 
     fun downloadBtnClicked(item: GithubRepo) {
         reposToDownload.add(item.name)
-        _isPermissionRequested.postValue(true)
+        if (!uiState.value.isPermissionRequired) {
+            reducer.sendEvent(ReposEvent.PermissionRequested(true))
+        }
     }
 
     fun setPermissionAnswer(answer: Map<String, Boolean>) {
+        reducer.sendEvent(ReposEvent.PermissionRequested(false))
         var isAllGranted = true
         for (isGranted in answer.values) {
             isAllGranted = isAllGranted && isGranted
         }
-        if(isAllGranted) {
+        if (isAllGranted) {
             viewModelScope.launch(Dispatchers.IO) {
-                reposToDownload.forEach { loadZipRepo(it) }
+                reposToDownload.forEach { loadZipRepo(it) } //todo ConcurrentModificationException, что вполне логично
             }
         } else {
             reposToDownload.clear()
-            _snackMessage.postValue(R.string.no_permission_error_text)
+            reducer.sendEvent(ReposEvent.ShowSnack(R.string.no_permission_error_text))
         }
     }
 
     private suspend fun saveDownloadHistoryRecord(repoName: String, dateTime: String) {
         repository.saveDownloadInHistory(
             HistoryRecord(
-                userLogin, repoName,
+                userLogin,
+                repoName,
                 dateTime
             )
         )
     }
 
-    //Suppress на _snackMessage.postValue(errMsg) - баг линта.
-    @SuppressLint("NullSafeMutableLiveData")
     private suspend fun loadZipRepo(repoName: String) {
         when (val answer = repository.loadRepoZip(userLogin, repoName)) {
             is ResultWrapper.Success -> {
@@ -144,7 +116,7 @@ class ReposViewModel
             is ResultWrapper.Failure -> {
                 val errMsg = handleError(answer.error)
                 if (errMsg != null) {
-                    _snackMessage.postValue(errMsg)
+                    reducer.sendEvent(ReposEvent.SetError(errMsg))
                 }
             }
         }
@@ -154,17 +126,19 @@ class ReposViewModel
         val dateTime: String =
             SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Calendar.getInstance().time)
 
-        //todo всё в worker?
         when (val answer = repository.saveFileInExternalStorage(
             body,
             "$path/$repoName-$userLogin-$dateTime$FILE_EXTENSION"
         )) {
             is ResultWrapper.Success -> {
                 saveDownloadHistoryRecord(repoName, dateTime)
-                _snackMessage.postValue(R.string.file_downlod_succes)
+                reducer.sendEvent(ReposEvent.ShowSnack(R.string.file_downlod_succes))
             }
             is ResultWrapper.Failure -> {
-                _snackMessage.postValue(handleError(answer.error))
+                val errMsgResInt = handleError(answer.error)
+                if (errMsgResInt != null) {
+                    reducer.sendEvent(ReposEvent.SetError(errMsgResInt))
+                }
             }
         }
     }
@@ -196,13 +170,10 @@ class ReposViewModel
         }
     }
 
-    fun linkBtnClicked(item: GithubRepo) {
-        _htmlUrl.postValue(item.url)
+    fun screenNavigateOut() {
+        reducer.sendEvent(ReposEvent.ScreenNavigateOut)
     }
 
-    //Suppress на _additionalRepos.postValue(answer.value)
-    //и _snackMessage.postValue(errMsg) - баг линта.
-    @SuppressLint("NullSafeMutableLiveData")
     fun onScrolledToEnd(lastVisibleItemPosition: Int, itemCount: Int) {
         if (lastVisibleItemPosition + VISIBLE_THRESHOLD > itemCount) {
             if (request?.isActive == true || allDownloaded) {
@@ -213,18 +184,79 @@ class ReposViewModel
                 when (val answer = searchRepos(userLogin)) {
                     is ResultWrapper.Success -> {
                         if (answer.value.isEmpty()) {
-                            _snackMessage.postValue(R.string.all_repos_download_text)
+                            reducer.sendEvent(ReposEvent.ShowSnack(R.string.all_repos_download_text))
                             allDownloaded = true
                         } else {
-                            _additionalRepos.postValue(answer.value)
+                            reducer.sendEvent(ReposEvent.NewReposFound(answer.value))
                         }
                     }
                     is ResultWrapper.Failure -> {
                         val errMsg = handleError(answer.error)
                         if (errMsg != null) {
-                            _snackMessage.postValue(errMsg)
+                            reducer.sendEvent(ReposEvent.SetError(errMsg))
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private class ReposReducer(initial: ReposState) {
+
+        private val _state: MutableStateFlow<ReposState> = MutableStateFlow(initial)
+        val state: StateFlow<ReposState>
+            get() = _state
+
+        fun setState(newState: ReposState) {
+            _state.tryEmit(newState)
+        }
+
+        fun sendEvent(event: ReposEvent) {
+            reduce(_state.value, event)
+        }
+
+        fun reduce(oldState: ReposState, event: ReposEvent) {
+            when (event) {
+                is ReposEvent.NavigateToHtml -> {
+                    setState(oldState.copy(htmlLink = event.html))
+                }
+                is ReposEvent.ScreenNavigateOut -> {
+                    setState(oldState.copy(htmlLink = null))
+                }
+                is ReposEvent.PermissionRequested -> {
+                    setState(
+                        oldState.copy(
+                            isPermissionRequired = event.isRequested
+                        )
+                    )
+                }
+                is ReposEvent.ReposLoading -> {
+                    setState(
+                        oldState.copy(
+                            isLoading = true,
+                            errorMsg = null
+                        )
+                    )
+                }
+                is ReposEvent.NewReposFound -> {
+                    val newReposList = oldState.repos.toMutableList()
+                    newReposList.addAll(event.repos)
+                    setState(
+                        oldState.copy(
+                            repos = newReposList,
+                            errorMsg = null,
+                            isLoading = false
+                        )
+                    )
+                }
+                is ReposEvent.NoReposFound -> {
+                    //todo
+                }
+                is ReposEvent.SetError -> {
+                    setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
+                }
+                is ReposEvent.ShowSnack -> {
+                    //todo
                 }
             }
         }

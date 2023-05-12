@@ -1,58 +1,110 @@
 package com.example.zipporeppogithub.ui.repos
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.network.GithubRepo
+import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemData
+import com.example.zipporeppogithub.ui.repos.composepreview.RepoItemDataProvider
+
+private val PERMISSIONS_REQUIRED = arrayOf(
+    Manifest.permission.READ_EXTERNAL_STORAGE,
+    Manifest.permission.WRITE_EXTERNAL_STORAGE
+)
 
 @Composable
 fun ReposScreen(
     viewModel: ReposViewModel
 ) {
-    val repos = viewModel.reposToShow.observeAsState().value
-    val scrollState = rememberScrollState()
-    val isEndReached by remember {
-        derivedStateOf {
-            scrollState.value >= scrollState.maxValue - 5
+    val state by viewModel.uiState.collectAsState()
+
+    val askForPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { isGranted -> viewModel.setPermissionAnswer(isGranted) }
+
+    when {
+        state.htmlLink != null -> {
+            val uriHandler = LocalUriHandler.current
+            uriHandler.openUri(state.htmlLink!!)
+            viewModel.screenNavigateOut() //todo мигает так себе
+        }
+        state.isPermissionRequired -> {
+            askForPermission.launch(PERMISSIONS_REQUIRED)
+        }
+        state.repos.isNotEmpty() -> {
+            ReposList(
+                state.repos,
+                viewModel::downloadBtnClicked,
+                viewModel::linkBtnClicked
+            )
+        }
+        state.isLoading -> {
+            CircularLoadingIndicator()
+        }
+        state.errorMsg != null -> {
+            ErrorView(errMsgResId = state.errorMsg!!, viewModel::retryBtnClicked) //todo !!
         }
     }
+}
 
-    if (isEndReached) {
-        LaunchedEffect(Unit) {
-            //todo react on scroll end
+@Composable
+fun CircularLoadingIndicator() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun ErrorView(errMsgResId: Int, onRetryBtnClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = stringResource(id = errMsgResId))
+            Button(onClick = onRetryBtnClick) {
+                Text(text = stringResource(id = R.string.retry_btn_text))
+            }
         }
     }
+}
 
+@Composable
+fun ReposList(
+    repos: List<GithubRepo>,
+    onDownloadClick: (GithubRepo) -> Unit,
+    onLinkClick: (GithubRepo) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        if (repos != null) {
-            items(repos) {
-                RepoItem(
-                    RepoItemData(
-                        repo = it,
-                        viewModel::downloadBtnClicked,
-                        viewModel::linkBtnClicked
-                    )
+        items(repos) {
+            RepoItem(
+                RepoItemData(
+                    repo = it,
+                    onDownloadClick,
+                    onLinkClick
                 )
-            }
+            )
         }
     }
 }
@@ -60,7 +112,7 @@ fun ReposScreen(
 @Preview
 @Composable
 fun RepoItem(
-    @PreviewParameter(RepoProvider::class) buildData: RepoItemData,
+    @PreviewParameter(RepoItemDataProvider::class) buildData: RepoItemData,
 //    repo: GithubRepo,
 //    downloadBtnCallback: (GithubRepo) -> Unit,
 //    linkBtnCallback: (GithubRepo) -> Unit
@@ -98,25 +150,3 @@ fun RepoItem(
         }
     }
 }
-
-//колхозить вот это каждый раз чтобы просто посмотреть как это будет выглядеть...
-class RepoProvider : PreviewParameterProvider<RepoItemData> {
-    override val values = sequenceOf(
-        RepoItemData(
-            repo = GithubRepo(
-                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFf",
-                "url"
-            ), downloadBtnCallback = {}, linkBtnCallback = {}),
-        RepoItemData(
-            repo = GithubRepo(
-                "LittleText",
-                "url"
-            ), downloadBtnCallback = {}, linkBtnCallback = {})
-    )
-}
-
-data class RepoItemData(
-    val repo: GithubRepo,
-    val downloadBtnCallback: (GithubRepo) -> Unit,
-    val linkBtnCallback: (GithubRepo) -> Unit
-)

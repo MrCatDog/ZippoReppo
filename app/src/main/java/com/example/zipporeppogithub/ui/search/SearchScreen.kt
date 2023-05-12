@@ -167,3 +167,10 @@ fun CircularLoadingIndicator() {
         CircularProgressIndicator()
     }
 }
+
+@Composable
+fun NothingFoundMsg() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = stringResource(id = R.string.empty_result_text))
+    }
+}

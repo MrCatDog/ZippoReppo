@@ -1,12 +1,11 @@
 package com.example.zipporeppogithub.ui.navigation
 
 sealed class Screen(val navRoute: String) {
-    object Home : Screen("home_graph")
+    object NestedGraphRepos : Screen("nested_repos")
     object Search : Screen("search")
-
-    object NestedGraphHistory: Screen("nested_history")
-    object History : Screen("history")
-
-    object NestedGraphRepos: Screen("nested_repos")
     object Repos : Screen("repos")
+
+
+    object NestedGraphHistory : Screen("nested_history")
+    object History : Screen("history")
 }

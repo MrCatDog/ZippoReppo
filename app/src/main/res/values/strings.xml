@@ -11,7 +11,6 @@
     <string name="no_permission_error_text">App need permission to work with storage</string>
     <string name="common_db_error_text">Data Base error, please, contact with developer</string>
 
-    <string name="search_hint">Search user</string>
     <string name="repo_open_in_browser_btn_text">Open</string>
     <string name="repo_download_content_desc">Download button</string>
     <string name="file_download_error">File download failed!</string>

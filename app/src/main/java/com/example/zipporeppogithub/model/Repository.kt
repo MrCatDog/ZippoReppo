@@ -12,7 +12,6 @@ import com.example.zipporeppogithub.model.network.GithubUserSearchResult
 import com.example.zipporeppogithub.ui.repos.ReposViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import java.io.FileOutputStream
 import java.io.InputStream

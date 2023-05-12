@@ -192,7 +192,7 @@ fun RepoItem(
         ) {
             Text(
                 text = buildData.repo.name,
-                fontSize = dimensionResource(id = R.dimen.history_item_repo_title_size).value.sp
+                fontSize = dimensionResource(id = R.dimen.repo_item_text_size).value.sp
             )
             Button(onClick = { buildData.linkBtnCallback(buildData.repo) }) {
                 Text(

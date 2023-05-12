@@ -68,7 +68,7 @@ fun NavGraphBuilder.addDownloadsNavGraph(navController: NavHostController) {
             val viewModel: ReposViewModel = daggerViewModel {
                 DaggerAppComponent.builder().applicationContext(context).build()
                     .provideReposViewModelFactory().create(
-                        userLogin = it.arguments!!.getString("userLogin")!!,//todo !!
+                        userLogin = it.arguments?.getString("userLogin").orEmpty(),
                         downloadPath = Environment.getExternalStoragePublicDirectory(
                             DIRECTORY_DOWNLOADS
                         ).path

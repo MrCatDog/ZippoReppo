@@ -7,7 +7,6 @@
 
     <dimen name="search_item_padding">5dp</dimen>
     <dimen name="search_item_div_height">2dp</dimen>
-    <dimen name="search_item_div_radius">60dp</dimen>
     <dimen name="search_item_username_size">20sp</dimen>
     <dimen name="search_item_div_padding_horizontal">10dp</dimen>
 

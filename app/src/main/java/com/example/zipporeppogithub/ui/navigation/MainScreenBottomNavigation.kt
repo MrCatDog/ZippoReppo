@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -25,11 +26,12 @@ fun MainScreenBottomNavigation(navController: NavController) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
         items.forEach { item ->
+            val title = stringResource(id = item.title)
             BottomNavigationItem(
-                icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
+                icon = { Icon(painterResource(id = item.icon), contentDescription = title) },
                 label = {
                     Text(
-                        text = item.title,
+                        text = title,
                         fontSize = dimensionResource(id = R.dimen.bottom_nav_item_font_size).value.sp
                     )
                 },
@@ -39,7 +41,6 @@ fun MainScreenBottomNavigation(navController: NavController) {
                     navController.navigate(item.navDestination) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
-                            inclusive = true
                         }
                         launchSingleTop = true
                         restoreState = true

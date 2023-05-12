@@ -18,7 +18,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.zipporeppogithub.R
 import com.example.zipporeppogithub.model.network.GithubRepo
@@ -205,7 +204,7 @@ fun RepoItem(
             onClick = { buildData.downloadBtnCallback(buildData.repo) }) {
             Icon(
                 modifier = Modifier
-                    .size(dimensionResource(id = R.dimen.download_repo_img_size).value.dp),//todo нужно ли тут это .value.dp
+                    .size(dimensionResource(id = R.dimen.download_repo_img_size)),
                 painter = painterResource(id = R.drawable.repo_download_img),
                 contentDescription = stringResource(
                     id = R.string.repo_download_content_desc

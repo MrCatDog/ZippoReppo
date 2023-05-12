@@ -66,7 +66,7 @@ class SearchViewModel
         request = viewModelScope.launch(Dispatchers.IO) {
             val prevRequest = uiState.value.prevRequest
             if (prevRequest.isNotEmpty()) {
-                getUsers(uiState.value.prevRequest) //todo
+                getUsers(uiState.value.prevRequest)
             } else {
                 reducer.sendEvent(SearchEvent.ClearUsers)
             }

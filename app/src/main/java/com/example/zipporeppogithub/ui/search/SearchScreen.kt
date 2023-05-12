@@ -66,7 +66,7 @@ fun SearchScreen(
 }
 
 @Composable
-fun SearchField(prevQuery: String, onQueryChange: (String) -> Unit) { //todo prev
+fun SearchField(prevQuery: String, onQueryChange: (String) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {

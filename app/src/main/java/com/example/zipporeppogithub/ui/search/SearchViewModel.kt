@@ -11,7 +11,6 @@ import com.example.zipporeppogithub.model.ErrorEntity.DBError.*
 import com.example.zipporeppogithub.model.ResultWrapper
 import com.example.zipporeppogithub.utils.USERS_RESULT_COUNT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
@@ -116,61 +115,6 @@ class SearchViewModel
         resultsPage++
         request = viewModelScope.launch(Dispatchers.IO) {
             searchNew(uiState.value.prevRequest)
-        }
-    }
-
-    private class SearchReducer(initial: SearchState) {
-
-        private val _state: MutableStateFlow<SearchState> = MutableStateFlow(initial)
-        val state: StateFlow<SearchState>
-            get() = _state
-
-        fun setState(newState: SearchState) {
-            _state.tryEmit(newState)
-        }
-
-        fun sendEvent(event: SearchEvent) {
-            reduce(_state.value, event)
-        }
-
-        fun reduce(oldState: SearchState, event: SearchEvent) {
-            when (event) {
-                is SearchEvent.NavigateToUserRepos -> {
-                    setState(oldState.copy(reposNav = event.userLogin))
-                }
-                is SearchEvent.ScreenNavOut -> {
-                    setState(oldState.copy(reposNav = null))
-                }
-                is SearchEvent.ClearUsers -> {
-                    setState(oldState.copy(users = emptyList(), errorMsg = null, prevRequest = ""))
-                }
-                is SearchEvent.UsersLoading -> {
-                    setState(
-                        oldState.copy(
-                            isLoading = true,
-                            errorMsg = null,
-                            prevRequest = event.query
-                        )
-                    )
-                }
-                is SearchEvent.NewUsersFound -> {
-                    val newUsersList = oldState.users.toMutableList()
-                    newUsersList.addAll(event.users)
-                    setState(
-                        oldState.copy(
-                            users = newUsersList,
-                            errorMsg = null,
-                            isLoading = false
-                        )
-                    )
-                }
-                is SearchEvent.NoUsersFound -> {
-                    setState(oldState.copy(isLoading = false, )) //todo
-                }
-                is SearchEvent.SetError -> {
-                    setState(oldState.copy(errorMsg = event.errorMsgResource, isLoading = false))
-                }
-            }
         }
     }
 }
